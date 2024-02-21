@@ -12,7 +12,7 @@ REPORT_EVERY_N_DEFAULT = 1000
 REPORT_EVERY_N = {
     "protein": 5000,
     "evidence": 50000,
-    "intraction": 10000,
+    "interaction": 10000,
 }
 
 
@@ -75,6 +75,33 @@ def insert_tissues(tissue_metadata: Path) -> None:
     log.info("Done")
 
 
+def insert_proteins(protein_metadata: Path) -> None:
+    header_read = False
+    insert_buffer = []
+    c = 0
+    with protein_metadata.open() as tm:
+        for line in tm:
+            if not header_read:
+                header_read = True
+                continue
+            uid, gid, name, taxid, desc = line.strip().split("\t")
+            # TODO(mateo): profile and build a dictionary if too slow.
+            organism = Organism.objects.get(tax_id=int(taxid))
+            insert_buffer.append(
+                Protein(uniprot_accession=uid,
+                        gene_accession=gid,
+                        entry_name=name,
+                        description=desc,
+                        organism=organism)
+            )
+            c += 1
+            if c % REPORT_EVERY_N.get("protein", REPORT_EVERY_N_DEFAULT) == 0:
+                log.info(f"Loaded {c} proteins so far...")
+    log.info(f"inserting {c} proteins...")
+    Tissue.objects.bulk_create(insert_buffer)
+    log.info("Done")
+
+
 def run(hint_oputput_dir: Path,
         mi_ontology: Path,
         protein_metadata: Path,
@@ -82,6 +109,7 @@ def run(hint_oputput_dir: Path,
         tissue_metadata: Path) -> None:
     insert_mi_ontology(mi_ontology)
     insert_organisms(taxonomy_metadata)
+    insert_proteins(protein_metadata)
     insert_tissues(tissue_metadata)
 
 
