@@ -3,6 +3,7 @@ from base.models import (MITerm, Pubmed, Organism, Protein, Tissue,
                          Interaction, Evidence, DownloadFile)
 from pathlib import Path
 from goapfp.io.obo_parser import OboParser
+from typing import Dict
 import logging
 
 
@@ -16,21 +17,23 @@ REPORT_EVERY_N = {
 }
 
 
-def insert_mi_ontology(mi_ontology: Path) -> None:
+def insert_mi_ontology(mi_ontology: Path) -> Dict:
     mi = OboParser(mi_ontology.open())
     insert_buffer = []
     for term in mi:
         insert_buffer.append(
-            MITerm(mi_id=mi.tags["id"][0].value.split(":")[-1],
+            MITerm(mi_id=int(mi.tags["id"][0].value.split(":")[-1]),
                    name=mi.tags["name"][0].value,
                    description=mi.tags["def"][0].value)
         )
     log.info(f"inserting {len(insert_buffer)} PSI-MI terms...")
-    MITerm.objects.bulk_create(insert_buffer)
+    miterms = MITerm.objects.bulk_create(insert_buffer)
     log.info("Done")
+    log.info("Creating PSI-MO id -> term dictionary..")
+    return {m.mi_id: m for m in miterms}
 
 
-def insert_organisms(taxonomy_metadata: Path) -> None:
+def insert_organisms(taxonomy_metadata: Path) -> Dict:
     header_read = False
     insert_buffer = []
     c = 0
@@ -41,7 +44,7 @@ def insert_organisms(taxonomy_metadata: Path) -> None:
                 continue
             tax_id, name, sci_name = line.strip().split("\t")
             insert_buffer.append(
-                Organism(tax_id=tax_id,
+                Organism(tax_id=int(tax_id),
                          name=name,
                          scientific_name=sci_name)
             )
@@ -49,11 +52,13 @@ def insert_organisms(taxonomy_metadata: Path) -> None:
             if c % REPORT_EVERY_N.get("organim", REPORT_EVERY_N_DEFAULT) == 0:
                 log.info(f"Loaded {c} organisms so far...")
     log.info(f"inserting {c} organisms...")
-    Organism.objects.bulk_create(insert_buffer)
+    organisms = Organism.objects.bulk_create(insert_buffer)
     log.info("Done")
+    log.info("Creating tax id -> organism dictionary..")
+    return {o.tax_id: o for o in organisms}
 
 
-def insert_tissues(tissue_metadata: Path) -> None:
+def insert_tissues(tissue_metadata: Path) -> Dict:
     header_read = False
     insert_buffer = []
     c = 0
@@ -71,11 +76,13 @@ def insert_tissues(tissue_metadata: Path) -> None:
             if c % REPORT_EVERY_N.get("tissue", REPORT_EVERY_N_DEFAULT) == 0:
                 log.info(f"Loaded {c} tissues so far...")
     log.info(f"inserting {c} tissues...")
-    Tissue.objects.bulk_create(insert_buffer)
+    tissues = Tissue.objects.bulk_create(insert_buffer)
     log.info("Done")
+    log.info("Creating tissue name -> tissue dictionary...")
+    return {t.name: t for t in tissues}
 
 
-def insert_proteins(protein_metadata: Path) -> None:
+def insert_proteins(protein_metadata: Path, organisms: Dict) -> Dict:
     header_read = False
     insert_buffer = []
     c = 0
@@ -85,21 +92,30 @@ def insert_proteins(protein_metadata: Path) -> None:
                 header_read = True
                 continue
             uid, gid, name, taxid, desc = line.strip().split("\t")
-            # TODO(mateo): profile and build a dictionary if too slow.
-            organism = Organism.objects.get(tax_id=int(taxid))
             insert_buffer.append(
                 Protein(uniprot_accession=uid,
                         gene_accession=gid,
                         entry_name=name,
                         description=desc,
-                        organism=organism)
+                        organism=organisms[taxid])
             )
             c += 1
             if c % REPORT_EVERY_N.get("protein", REPORT_EVERY_N_DEFAULT) == 0:
                 log.info(f"Loaded {c} proteins so far...")
     log.info(f"inserting {c} proteins...")
-    Tissue.objects.bulk_create(insert_buffer)
+    proteins = Protein.objects.bulk_create(insert_buffer)
     log.info("Done")
+    log.info("Creating uniprot_accession -> protein dictionary...")
+    return {p.uniprot_accession: p for p in proteins}
+
+
+def insert_interactions(hint_output_dir: Path,
+                        mi_terms: Dict,
+                        proteins: Dict,
+                        tissues: Dict) -> None:
+    # TODO(mateo): Handle the tissue data once the format is agreed.
+
+    pass
 
 
 def run(hint_oputput_dir: Path,
@@ -107,10 +123,10 @@ def run(hint_oputput_dir: Path,
         protein_metadata: Path,
         taxonomy_metadata: Path,
         tissue_metadata: Path) -> None:
-    insert_mi_ontology(mi_ontology)
-    insert_organisms(taxonomy_metadata)
-    insert_proteins(protein_metadata)
-    insert_tissues(tissue_metadata)
+    mi_terms = insert_mi_ontology(mi_ontology)
+    organisms = insert_organisms(taxonomy_metadata)
+    proteins = insert_proteins(protein_metadata, organisms)
+    tissues = insert_tissues(tissue_metadata)
 
 
 class Command(BaseCommand):
