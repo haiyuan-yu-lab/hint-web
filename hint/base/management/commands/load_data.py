@@ -114,8 +114,45 @@ def insert_interactions(hint_output_dir: Path,
                         proteins: Dict,
                         tissues: Dict) -> None:
     # TODO(mateo): Handle the tissue data once the format is agreed.
-
-    pass
+    pubmeds = {}
+    in_files = sorted(hint_output_dir.glob("**/*.txt"))
+    log.info(f"Loading interactions from {len(in_files)} files")
+    c = 0
+    for in_file in in_files:
+        header_read = False
+        evidence_buffer = []
+        with in_file.open() as f:
+            etype = None
+            if "binary" in in_file.stem:
+                etype = Evidence.EvidenceType.BINARY
+            elif "cocomp" in in_file.stem:
+                etype = Evidence.EvidenceType.CO_COMPLEX
+            if etype is None:
+                log.info(f"Skipping {in_file}, can't find evidence type")
+            for line in f:
+                if not header_read:
+                    header_read = True
+                    continue
+                up_a, up_b, g_a, g_b, p_m_q = f.strip().split("\t")
+                pmid, method, quality = p_m_q.split(":")
+                pmid = int(pmid)
+                method = int(method)
+                if pmid not in pubmeds:
+                    pubmeds[pmid] = Pubmed.objects.get_or_create(
+                        pubmed_id=pmid, title="update_entry")
+                i = Interaction.objects.get_or_create(p1=proteins[up_a],
+                                                      p2=proteins[up_b])
+                c += 1
+                if c % REPORT_EVERY_N.get("interaction",
+                                          REPORT_EVERY_N_DEFAULT) == 0:
+                    log.info(f"Processed {c} interactions so far...")
+                evidence_buffer.append(Evidence(interaction=i,
+                                                pubmed=pubmeds[pmid],
+                                                method=mi_terms[method],
+                                                quality=quality,
+                                                evidence_type=etype))
+            Evidence.objects.bulk_create(evidence_buffer)
+    log.info(f"Processed all files with a total of {c} interactions.")
 
 
 def run(hint_oputput_dir: Path,
@@ -127,6 +164,7 @@ def run(hint_oputput_dir: Path,
     organisms = insert_organisms(taxonomy_metadata)
     proteins = insert_proteins(protein_metadata, organisms)
     tissues = insert_tissues(tissue_metadata)
+    insert_interactions(hint_oputput_dir, mi_terms, proteins, tissues)
 
 
 class Command(BaseCommand):

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 # ============================================================================
@@ -70,41 +71,23 @@ class Interaction(models.Model):
 
 
 class Evidence(models.Model):
-    QUALITY_CODES = (
-        (0, "high throughput"),
-        (1, "literature curated"),
-    )
-    EVIDENCE_TYPES = (
-        (0, "binary"),
-        (1, "co-complex"),
-    )
-    pubmed_id = models.ForeignKey(Pubmed,
-                                  on_delete=models.CASCADE)
+    class Quality(models.TextChoices):
+        HIGH_THROUGHPUT = "HT", _("High Throughput")
+        LITERATURE_CURATED = "LC", _("Literature Curated")
+
+    class EvidenceType(models.IntegerChoices):
+        BINARY = 0
+        CO_COMPLEX = 1
+
+    interaction = models.ForeignKey(Interaction,
+                                    on_delete=models.CASCADE)
+    pubmed = models.ForeignKey(Pubmed,
+                               on_delete=models.CASCADE)
     # TODO(mateo): confirm that this field is actually PSI-MI ontology.
     method = models.ForeignKey(MITerm,
                                on_delete=models.CASCADE)
-    quality = models.PositiveIntegerField(choices=QUALITY_CODES)
-    evidence_type = models.PositiveIntegerField(choices=EVIDENCE_TYPES)
+    quality = models.CharField(max_length=2, choices=Quality)
+    evidence_type = models.CharField(max_length=3, choices=EvidenceType)
     tissue = models.ForeignKey(Tissue,
                                on_delete=models.CASCADE,
                                default=Tissue.get_default_pk)
-
-
-class DownloadFile(models.Model):
-    QUALITY_CODES = (
-        (0, "high throughput"),
-        (1, "literature curated"),
-    )
-    EVIDENCE_TYPES = (
-        (0, "binary"),
-        (1, "co-complex"),
-        (2, "both"),  # for the DownloadFile we need this because the file is
-                      # pre-baked, and we won't generate a new file by querying
-                      # the actual union of the interactions.
-    )
-    organism = models.ForeignKey(Organism,
-                                 on_delete=models.CASCADE)
-    quality = models.PositiveIntegerField(choices=QUALITY_CODES)
-    evidence_type = models.PositiveIntegerField(choices=EVIDENCE_TYPES)
-    path = models.TextField()
-    display_name = models.TextField()
