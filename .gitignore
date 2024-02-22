@@ -9,6 +9,9 @@ __pycache__/
 # supporting data
 data/
 
+# node modules (we use tailwind css but we commit the postprocess css file)
+node_modules/
+
 # jupyter notebooks
 *.ipynb
 

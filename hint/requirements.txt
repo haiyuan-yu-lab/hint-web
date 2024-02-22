@@ -5,3 +5,4 @@ MarkupSafe==2.1.5
 psycopg2-binary==2.9.9
 sqlparse==0.4.4
 goapfp==0.0.dev8
+gunicorn==21.2.0

@@ -26,19 +26,22 @@ SECRET_KEY = os.environ.get(
     "django-insecure-!s(%@0#-7p8usuzp-#oxrxobdl%za)!a_b#5hbuma^!@i7%^7i")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = int(os.environ.get("HINT_DEBUG", default=0)) == 1
+DEBUG = int(os.environ.get("HINT_DEBUG", default=1)) == 1
 
 ALLOWED_HOSTS = os.environ.get("HINT_ALLOWED_HOSTS",
-                               default="").split(" ")
+                               default="0.0.0.0 localhost 127.0.0.1"
+                               ).split(" ")
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("HINT_CSRF_TRUSTED_ORIGINS",
-                                      default="").split(" ")
+                                      default="http://localhost"
+                                      " http://127.0.0.0"
+                                      " http://0.0.0.0"
+                                      ).split(" ")
 
 # Application definition
 
 INSTALLED_APPS = [
-    "base.apps.BaseConfig"
-    'django.contrib.admin',
+    "base.apps.BaseConfig",
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

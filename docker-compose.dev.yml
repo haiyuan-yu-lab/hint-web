@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  # hint
+  hint:
+    build: 
+      context: ./hint
+      dockerfile: Dockerfile.prod
+    command: gunicorn hint.wsgi:application --bind 0.0.0.0:80 -w 4
+    volumes:
+      - ./hint/base/static:/home/app/hint/staticfiles
+      - ./hint/base:/home/app/hint/base
+      - ./hint/hint:/home/app/hint/hint
+    # uncomment these to access the app directly for test purposes, 
+    # but expect everything to be broken.
+    ports:
+      - 8080:80
+    env_file: 
+      - ./.env.hint.dev
+    networks:
+      - hint
+    depends_on:
+      hint-db:
+        condition: service_healthy
+  hint-db:
+    image: postgres:13.0-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 5s
+      retries: 10 # this might seem too many retries, but there is data being copied...
+    volumes:
+      - hint-db_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.hint.dev.db
+    networks:
+      - hint
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    networks:
+      - hint
+  # reverse proxy
+  proxy:
+    build: ./reverse-proxy
+    volumes:
+      - ./reverse-proxy/default.conf:/etc/nginx/conf.d/nginx.conf
+        #- static_proteobooster:/home/app/proteobooster/staticfiles
+      - ./hint/base/static:/home/app/hint/staticfiles
+    networks:
+      - hint
+    ports:
+      - 80:80
+    depends_on:
+      - hint
+networks:
+  hint:
+    name: hint
+    external: false
+
+volumes:
+  hint-db_data:
+  static_hint:
