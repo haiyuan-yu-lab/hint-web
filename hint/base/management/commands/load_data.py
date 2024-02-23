@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from base.models import (MITerm, Pubmed, Organism, Protein, Tissue,
-                         Interaction, Evidence, DownloadFile)
+                         Interaction, Evidence)
 from pathlib import Path
 from goapfp.io.obo_parser import OboParser
 from typing import Dict
@@ -21,10 +21,11 @@ def insert_mi_ontology(mi_ontology: Path) -> Dict:
     mi = OboParser(mi_ontology.open())
     insert_buffer = []
     for term in mi:
+        desc = "" if len(term.tags["def"]) == 0 else term.tags["def"][0].value
         insert_buffer.append(
-            MITerm(mi_id=int(mi.tags["id"][0].value.split(":")[-1]),
-                   name=mi.tags["name"][0].value,
-                   description=mi.tags["def"][0].value)
+            MITerm(mi_id=int(term.tags["id"][0].value.split(":")[-1]),
+                   name=term.tags["name"][0].value,
+                   description=desc)
         )
     log.info(f"inserting {len(insert_buffer)} PSI-MI terms...")
     miterms = MITerm.objects.bulk_create(insert_buffer)
@@ -42,11 +43,12 @@ def insert_organisms(taxonomy_metadata: Path) -> Dict:
             if not header_read:
                 header_read = True
                 continue
-            tax_id, name, sci_name = line.strip().split("\t")
+            tax_id, code, kdom, sname, cname, syn = line.split("\t")
+            syn = syn.strip()
             insert_buffer.append(
                 Organism(tax_id=int(tax_id),
-                         name=name,
-                         scientific_name=sci_name)
+                         name=cname,
+                         scientific_name=sname)
             )
             c += 1
             if c % REPORT_EVERY_N.get("organim", REPORT_EVERY_N_DEFAULT) == 0:
@@ -92,6 +94,7 @@ def insert_proteins(protein_metadata: Path, organisms: Dict) -> Dict:
                 header_read = True
                 continue
             uid, gid, name, taxid, desc = line.strip().split("\t")
+            taxid = int(taxid)
             insert_buffer.append(
                 Protein(uniprot_accession=uid,
                         gene_accession=gid,
@@ -122,6 +125,8 @@ def insert_interactions(hint_output_dir: Path,
         header_read = False
         evidence_buffer = []
         with in_file.open() as f:
+            if "all" not in in_file.name:
+                continue
             etype = None
             if "binary" in in_file.stem:
                 etype = Evidence.EvidenceType.BINARY
@@ -129,28 +134,32 @@ def insert_interactions(hint_output_dir: Path,
                 etype = Evidence.EvidenceType.CO_COMPLEX
             if etype is None:
                 log.info(f"Skipping {in_file}, can't find evidence type")
+                continue
+            log.info(f"Processing {in_file} ...")
+            log.info(f"Evidence type {etype} ...")
             for line in f:
                 if not header_read:
                     header_read = True
                     continue
-                up_a, up_b, g_a, g_b, p_m_q = f.strip().split("\t")
-                pmid, method, quality = p_m_q.split(":")
-                pmid = int(pmid)
-                method = int(method)
-                if pmid not in pubmeds:
-                    pubmeds[pmid] = Pubmed.objects.get_or_create(
-                        pubmed_id=pmid, title="update_entry")
-                i = Interaction.objects.get_or_create(p1=proteins[up_a],
-                                                      p2=proteins[up_b])
+                up_a, up_b, g_a, g_b, p_m_qs = line.strip().split("\t")
+                i, _ = Interaction.objects.get_or_create(p1=proteins[up_a],
+                                                         p2=proteins[up_b])
                 c += 1
                 if c % REPORT_EVERY_N.get("interaction",
                                           REPORT_EVERY_N_DEFAULT) == 0:
                     log.info(f"Processed {c} interactions so far...")
-                evidence_buffer.append(Evidence(interaction=i,
-                                                pubmed=pubmeds[pmid],
-                                                method=mi_terms[method],
-                                                quality=quality,
-                                                evidence_type=etype))
+                for p_m_q in p_m_qs.split("|"):
+                    pmid, method, quality = p_m_q.split(":")
+                    pmid = pmid
+                    method = int(method)
+                    if pmid not in pubmeds:
+                        pubmeds[pmid], _ = Pubmed.objects.get_or_create(
+                                pubmed_id=pmid, title="update_entry")
+                    evidence_buffer.append(Evidence(interaction=i,
+                                                    pubmed=pubmeds[pmid],
+                                                    method=mi_terms[method],
+                                                    quality=quality,
+                                                    evidence_type=etype))
             Evidence.objects.bulk_create(evidence_buffer)
     log.info(f"Processed all files with a total of {c} interactions.")
 
@@ -183,7 +192,8 @@ class Command(BaseCommand):
                                  " protein in the HINT pipeline should exist.")
         parser.add_argument("taxonomy_metadata",
                             help="Path to a TSV file with columns:"
-                                 " `tax_id` `organism_name` `scientific_name`."
+                                 " `tax_id` `code` `kingdom` `scientific name`"
+                                 " `common name`, and `synonym`."
                                  " Please note that every organisms in the"
                                  " HINT pipeline should exist.")
         parser.add_argument("tissue_metadata",
@@ -193,7 +203,7 @@ class Command(BaseCommand):
                                  " should exist.")
 
     def handle(self, *args, **options):
-        hint_output_dir = Path(options["hint_output_dir"])
+        hint_output_dir = Path(options["hint_output_directory"])
         mi_ontology = Path(options["mi_ontology"])
         protein_metadata = Path(options["protein_metadata"])
         taxonomy_metadata = Path(options["taxonomy_metadata"])

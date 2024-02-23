@@ -7,16 +7,16 @@ from django.utils.translation import gettext_lazy as _
 # ============================================================================
 
 class MITerm(models.Model):
-    mi_id = models.CharField(max_length=7)
+    mi_id = models.CharField(max_length=7, unique=True)
     name = models.TextField()
     description = models.TextField()
 
 
 class Pubmed(models.Model):
-    pubmed_id = models.PositiveIntegerField()
+    pubmed_id = models.TextField(unique=True)
     title = models.TextField()
     authors = models.TextField()
-    year = models.PositiveIntegerField()
+    year = models.PositiveIntegerField(default=1900)
     source = models.TextField()
 
 # ============================================================================
@@ -32,7 +32,7 @@ class Pubmed(models.Model):
 # URL below explains how to do this
 # https://pganalyze.com/blog/postgresql-partitioning-django
 class Organism(models.Model):
-    tax_id = models.PositiveIntegerField()
+    tax_id = models.PositiveIntegerField(unique=True)
     name = models.TextField()
     scientific_name = models.TextField()
 
@@ -40,7 +40,7 @@ class Organism(models.Model):
 class Protein(models.Model):
     # we support UniProt and Gene Symbols, max_lengths are 25, which may be
     # too long for the present, but maybe not enough in the future!
-    uniprot_accession = models.CharField(max_length=25)
+    uniprot_accession = models.CharField(max_length=25, unique=True)
     gene_accession = models.CharField(max_length=25)
     entry_name = models.CharField(max_length=50, default="")
     description = models.TextField()
@@ -87,7 +87,7 @@ class Evidence(models.Model):
     method = models.ForeignKey(MITerm,
                                on_delete=models.CASCADE)
     quality = models.CharField(max_length=2, choices=Quality)
-    evidence_type = models.CharField(max_length=3, choices=EvidenceType)
+    evidence_type = models.IntegerField(choices=EvidenceType)
     tissue = models.ForeignKey(Tissue,
                                on_delete=models.CASCADE,
                                default=Tissue.get_default_pk)

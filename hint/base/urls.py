@@ -7,4 +7,5 @@ urlpatterns = [
     path("download", views.download, name="download"),
     path("faq", views.faq, name="faq"),
     path("viewer", views.home, name="viewer"),
+    path("search-proteins", views.search_protein, name="search-proteins"),
 ]

@@ -1,0 +1,14 @@
+{% if proteins is defined %}
+    <ul id="protein-search-results" 
+        class="max-h-72 scroll-py-2 overflow-y-auto py-2 text-sm text-gray-800"
+        role="listbox">
+        <!-- Active: "bg-indigo-600 text-white" -->
+    {% for protein in proteins %}
+        <li class="cursor-default select-none px-4 py-2"
+            id="{{ protein.uniprot_accession }}"
+            role="option" tabindex="-1">{{ protein.uniprot_accession }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="p-4 text-sm text-gray-500">No proteins found.</p>
+{% endif %}
