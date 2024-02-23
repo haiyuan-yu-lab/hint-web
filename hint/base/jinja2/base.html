@@ -26,9 +26,33 @@
                             <div class="hidden md:block">
                                 <div class="ml-10 flex items-baseline space-x-4">
                                     <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-                                    <a href="{{ url('home') }}" class="bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium" aria-current="page">Home</a>
-                                    <a href="{{ url('downloads') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">Download</a>
-                                    <a href="{{ url('faq') }}" class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">FAQ</a>
+                                    <a href="{{ url('home') }}" aria-current="page"
+                                        {% if active == 'home' %}
+                                            class="bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        {% else %}
+                                            class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        {% endif %}
+                                    >
+                                        Home
+                                    </a>
+                                    <a href="{{ url('download') }}" aria-current="page"
+                                        {% if active == 'download' %}
+                                            class="bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        {% else %}
+                                            class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        {% endif %}
+                                    >
+                                        Download
+                                    </a>
+                                    <a href="{{ url('faq') }}" aria-current="page"
+                                        {% if active == 'faq' %}
+                                            class="bg-gray-900 text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        {% else %}
+                                            class="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium"
+                                        {% endif %}
+                                    >
+                                        FAQ
+                                    </a>
                                 </div>
                             </div>
                         </div>

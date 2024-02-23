@@ -2,7 +2,89 @@
 
 
 {% block content %}
-<h1 class="text-3xl font-bold underline">HINT</h1>
-HINT
+
+<div class="bg-white px-6 py-32 lg:px-8">
+    <img class="mx-auto h-56 w-auto mb-28"
+         src="{{ static('img/new_logo_blue.png') }}"
+         alt="HINT">
+    <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
+        <div>
+            <fieldset>
+                <legend class="block text-sm font-medium leading-6 text-gray-900">Interactome Explorer</legend>
+                <div class="mt-2 -space-y-px rounded-md bg-white shadow-sm">
+                    <div>
+                        <label for="protein" class="sr-only">Enter up to 10 proteins separated by , ; or space</label>
+                        <input type="text" name="protein" id="protein" class="relative block w-full rounded-none rounded-t-md border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Enter up to 10 proteins separated by , ; or space">
+                    </div>
+                    <div class="flex -space-x-px">
+                        <div class="w-1/3 min-w-0 flex-1">
+                            <label for="organism" class="sr-only">Country</label>
+                            <select id="organism"
+                                    name="organism"
+                                    autocomplete="organism-name"
+                                    class="relative block w-full rounded-none rounded-bl-md border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                <option value="HomoSapiens">H. sapiens</option>
+                                <option value="SaccharomycesCerevisiaeS288C">S. cerevisiae</option>
+                                <option value="SchizosaccharomycesPombe972H">S. pombe</option>
+                                <option value="MusMusculus">M. musculus</option>
+                                <option value="DrosophilaMelanogaster">D. melanogaster</option>
+                                <option value="CaenorhabditisElegans">C. elegans</option>
+                                <option value="ArabidopsisThaliana">A. thaliana</option>
+                                <option value="BacillusSubtilisSubspSubtilisStr168">B. subtilis</option>
+                                <option value="BosTaurus">B. taurus</option>
+                                <option value="EscherichiaColiK12">E. coli</option>
+                                <option value="RattusNorvegicus">R. norvegicus</option>
+                                <option value="OryzaSativa">O. sativa</option>
+                            </select>
+                        </div>
+                        <div class="w-1/3 min-w-0 flex-1">
+                            <label for="evidence-type" class="sr-only">Evidence Type</label>
+                            <select id="evidence-type"
+                                    name="evidence-type"
+                                    autocomplete="evidence-type"
+                                    class="relative block w-full rounded-none border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                <option value="binary">Binary</option>
+                                <option value="cocomp">Co-complex</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <label for="quality" class="sr-only">Quality</label>
+                            <select id="quality"
+                                    name="quality"
+                                    autocomplete="quality"
+                                    class="relative block w-full rounded-none rounded-br-md border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                <option value="high-quality">High quality</option>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">What is HINT</h1>
+        <p class="mt-6 text-xl leading-8">
+            HINT (High-quality INTeractomes) is a curated compilation of high-quality protein-protein interactions from
+            8 interactome resources (
+            <a href="https://thebiogrid.org/" class="text-indigo-600 hover:text-indigo-500" target="_blank">BioGRID</a>,
+            <a href="http://mint.bio.uniroma2.it/" class="text-indigo-600 hover:text-indigo-500" target="_blank">MINT</a>,
+            <a href="http://wodaklab.org/iRefWeb/search/index" class="text-indigo-600 hover:text-indigo-500" target="_blank">iRefWeb</a>,
+            <a href="http://dip.doe-mbi.ucla.edu/dip/Main.cgi" class="text-indigo-600 hover:text-indigo-500" target="_blank">DIP</a>,
+            <a href="http://www.ebi.ac.uk/intact/" class="text-indigo-600 hover:text-indigo-500" target="_blank">IntAct</a>,
+            <a href="http://www.hprd.org/" class="text-indigo-600 hover:text-indigo-500" target="_blank">HPRD</a>,
+            <a href="http://mips.helmholtz-muenchen.de/proj/ppi/" class="text-indigo-600 hover:text-indigo-500" target="_blank">MIPS</a> and 
+            <a href="http://www.rcsb.org/pdb/home/home.do" class="text-indigo-600 hover:text-indigo-500" target="_blank">the PDB</a>).
+            Interactions are filtered both systematically and manually to remove erroneous and low-quality interactions,
+            and is updated every night. HINT can be used for individual queries as well as for batch downloads.
+        </p>
+        <div class="mt-10 max-w-2xl">
+            <p><b>HINT dataset has been updated in Februrary, 2024.
+               We are in the process of building another new HINT website. The most recent dataset is in "2023_10" folder in "Download old versions".</b>
+            </p>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}
 
