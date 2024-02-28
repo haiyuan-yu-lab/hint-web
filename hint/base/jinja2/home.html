@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block head %}
+    <script defer src="{{ static('js/alpine.morph.js') }}"></script>
     <script defer src="{{ static('js/alpine.min.js') }}"></script>
 {% endblock %}
 
@@ -12,11 +13,10 @@
          alt="HINT">
     <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
         <div>
-            <fieldset>
+            <form>
                 <legend class="block text-sm font-medium leading-6 text-gray-900">Interactome Explorer</legend>
                 <div class="mt-2 -space-y-px rounded-md bg-white shadow-sm">
-                    <div x-data="protein_autocomplete()">
-                        <span x-text="c_index"></span>
+                    <div x-data="protein_autocomplete">
                         <div class="relative z-10" role="dialog" aria-modal="true">
                             <!--
                                 Background backdrop, show/hide based on modal state.
@@ -70,9 +70,11 @@
                                                       placeholder:text-gray-400
                                                       focus:ring-0
                                                       sm:text-sm"
-                                               x-on:keydown.down="c_index += 1; $refs.protein_0.focus();"
+                                               x-on:keydown.down.prevent="focusNextOption()"
+                                               x-on:keydown.up.prevent="focusPreviousOption()"
+                                               x-on:keydown.enter.prevent="selectCurrent()"
                                                hx-post="/search-proteins"
-                                               hx-trigger="change delay:500ms, search"
+                                               hx-trigger="input changed delay:500ms"
                                                hx-target="#protein-search-results"
                                                placeholder="Search..."
                                                role="combobox"
@@ -81,32 +83,43 @@
                                     </div>
                                     <div id="protein-search-results"
                                          x-on:htmx:after-swap="loadItems($event)"
-                                         x-on:keydown.down.prevent="focusNextOption()"
-                                         x-on:keydown.up.prevent="focusPreviousOption()"
                                          tabindex="-1"
                                          >
                                     </div>
+                                    <div id="protein-search-selection">
+                                        <ul>
+                                        <template x-for="protein in Array.from(selection)">
+                                            <li class="protein-pill"
+                                                x-text="protein"
+                                                :value="protein"></li>
+                                        </template>
+                                        <ul>
+                                    </div>
                                     <script>
-                                        function protein_autocomplete() {
-                                            return {
+                                        document.addEventListener('alpine:init', () => {
+                                            Alpine.data("protein_autocomplete", () => ({
                                                 options: [],
                                                 c_index: -1,
+                                                selected: null,
+                                                selection: new Set(),
                                                 open: false,
-                                                init: () => {
-                                                    console.log("init");
+                                                init() {
+                                                    this.$watch("selected", () => {
+                                                        let protein_accession = this.options[this.selected].getAttribute("value");
+                                                        this.selection.add(protein_accession);
+                                                        console.log(this.selection);
+                                                    });
                                                 },
                                                 loadItems: function (e) {
-                                                    console.log(e.detail);
-                                                    this.options = e.detail.elt.querySelectorAll("li");
-                                                    console.log("options", this.options);
-                                                },
-                                                clearSelection: (i) => {
+                                                    this.open = true;
                                                     this.c_index = -1;
+                                                    this.selected = null;
+                                                    this.options = e.detail.elt.querySelectorAll("li");
                                                 },
-                                                selectElement: () => {
-                                                    console.log("options", this.options);
+                                                selectCurrent: function () {
                                                     console.log("index", this.c_index);
-                                                    console.log("selected element", this.options[this.c_index].value);
+                                                    this.selected = this.c_index;
+                                                    console.log("options", this.options);
                                                 },
                                                 focusPreviousOption: function () {
                                                     if (this.c_index === -1) {
@@ -116,7 +129,7 @@
                                                         return;
                                                     }
                                                     this.c_index--;
-                                                    this.options[this.c_index].scrollIntoView();
+                                                    this.options[this.c_index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
                                                 },
                                                 focusNextOption: function () {
                                                     if (this.c_index === -1) {
@@ -129,39 +142,14 @@
                                                         return;
                                                     }
                                                     this.c_index++;
-                                                    this.options[this.c_index].scrollIntoView();
+                                                    this.options[this.c_index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
                                                 },
-                                            };
-                                        }
+                                            }));
+                                        });
                                     </script>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div>
-                        <label for="protein" class="sr-only">Enter up to 10 proteins separated by , ; or space</label>
-                        <input type="text"
-                               name="protein" id="protein"
-                               class="relative
-                               block
-                               w-full
-                               rounded-none
-                               rounded-t-md
-                               border-0
-                               bg-transparent
-                               py-1.5
-                               text-gray-900
-                               ring-1
-                               ring-inset
-                               ring-gray-300
-                               placeholder:text-gray-400
-                               focus:z-10
-                               focus:ring-2
-                               focus:ring-inset
-                               focus:ring-indigo-600
-                               sm:text-sm
-                               sm:leading-6"
-                               placeholder="Enter up to 10 proteins separated by , ; or space">
                     </div>
                     <div class="flex -space-x-px">
                         <div class="w-1/3 min-w-0 flex-1">
@@ -210,7 +198,7 @@
                         </div>
                     </div>
                 </div>
-            </fieldset>
+            </form>
         </div>
         <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">What is HINT</h1>
         <p class="mt-6 text-xl leading-8">

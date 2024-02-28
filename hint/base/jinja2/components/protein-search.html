@@ -11,7 +11,8 @@
             value="{{ protein.uniprot_accession }}"
             x-on:mouseenter="c_index = {{loop.index0}}"
             x-on:mouseleave="c_index = -1"
-            x-on:click="selectElement()"
+            x-on:click="selected = {{loop.index0}}"
+            x-on:keyup.enter.prevent="selected = {{loop.index0}}"
             role="option"
             tabindex="-1">{{ protein.uniprot_accession }}</li>
     {% endfor %}
