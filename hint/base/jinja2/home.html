@@ -107,7 +107,6 @@
                                                     this.$watch("selected", () => {
                                                         let protein_accession = this.options[this.selected].getAttribute("value");
                                                         this.selection.add(protein_accession);
-                                                        console.log(this.selection);
                                                     });
                                                 },
                                                 loadItems: function (e) {
@@ -115,17 +114,19 @@
                                                     this.c_index = -1;
                                                     this.selected = null;
                                                     this.options = e.detail.elt.querySelectorAll("li");
+                                                    if (this.options.length > 0) {
+                                                        this.c_index = 0;
+                                                    }
                                                 },
                                                 selectCurrent: function () {
-                                                    console.log("index", this.c_index);
                                                     this.selected = this.c_index;
-                                                    console.log("options", this.options);
                                                 },
                                                 focusPreviousOption: function () {
                                                     if (this.c_index === -1) {
                                                         return this.c_index = 0;
                                                     }
                                                     if (this.c_index === 0) {
+                                                        //console.log("prev on the first one");
                                                         return;
                                                     }
                                                     this.c_index--;
@@ -135,10 +136,8 @@
                                                     if (this.c_index === -1) {
                                                         return this.c_index = 0;
                                                     }
-                                                    console.log("length", this.options.length);
-                                                    console.log("index", this.c_index);
-                                                    if (this.c_index === this.options.length -1) {
-                                                        console.log("next on the last one");
+                                                    if (this.c_index >= this.options.length -1) {
+                                                        //console.log("next on the last one");
                                                         return;
                                                     }
                                                     this.c_index++;
