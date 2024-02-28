@@ -6,6 +6,6 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("download", views.download, name="download"),
     path("faq", views.faq, name="faq"),
-    path("viewer", views.home, name="viewer"),
-    path("search-proteins", views.search_protein, name="search-proteins"),
+    path("network-viewer", views.network_viewer, name="network-viewer"),
+    path("search-proteins", views.search_proteins, name="search-proteins"),
 ]

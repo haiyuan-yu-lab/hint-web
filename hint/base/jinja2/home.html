@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    <script defer src="{{ static('js/alpine.min.js') }}"></script>
+{% endblock %}
 
 {% block content %}
 
@@ -12,7 +15,8 @@
             <fieldset>
                 <legend class="block text-sm font-medium leading-6 text-gray-900">Interactome Explorer</legend>
                 <div class="mt-2 -space-y-px rounded-md bg-white shadow-sm">
-                    <div>
+                    <div x-data="protein_autocomplete()">
+                        <span x-text="c_index"></span>
                         <div class="relative z-10" role="dialog" aria-modal="true">
                             <!--
                                 Background backdrop, show/hide based on modal state.
@@ -66,8 +70,9 @@
                                                       placeholder:text-gray-400
                                                       focus:ring-0
                                                       sm:text-sm"
+                                               x-on:keydown.down="c_index += 1; $refs.protein_0.focus();"
                                                hx-post="/search-proteins"
-                                               hx-trigger="keyup delay:500ms, search"
+                                               hx-trigger="change delay:500ms, search"
                                                hx-target="#protein-search-results"
                                                placeholder="Search..."
                                                role="combobox"
@@ -75,7 +80,60 @@
                                                aria-controls="options">
                                     </div>
                                     <div id="protein-search-results"
+                                         x-on:htmx:after-swap="loadItems($event)"
+                                         x-on:keydown.down.prevent="focusNextOption()"
+                                         x-on:keydown.up.prevent="focusPreviousOption()"
+                                         tabindex="-1"
+                                         >
                                     </div>
+                                    <script>
+                                        function protein_autocomplete() {
+                                            return {
+                                                options: [],
+                                                c_index: -1,
+                                                open: false,
+                                                init: () => {
+                                                    console.log("init");
+                                                },
+                                                loadItems: function (e) {
+                                                    console.log(e.detail);
+                                                    this.options = e.detail.elt.querySelectorAll("li");
+                                                    console.log("options", this.options);
+                                                },
+                                                clearSelection: (i) => {
+                                                    this.c_index = -1;
+                                                },
+                                                selectElement: () => {
+                                                    console.log("options", this.options);
+                                                    console.log("index", this.c_index);
+                                                    console.log("selected element", this.options[this.c_index].value);
+                                                },
+                                                focusPreviousOption: function () {
+                                                    if (this.c_index === -1) {
+                                                        return this.c_index = 0;
+                                                    }
+                                                    if (this.c_index === 0) {
+                                                        return;
+                                                    }
+                                                    this.c_index--;
+                                                    this.options[this.c_index].scrollIntoView();
+                                                },
+                                                focusNextOption: function () {
+                                                    if (this.c_index === -1) {
+                                                        return this.c_index = 0;
+                                                    }
+                                                    console.log("length", this.options.length);
+                                                    console.log("index", this.c_index);
+                                                    if (this.c_index === this.options.length -1) {
+                                                        console.log("next on the last one");
+                                                        return;
+                                                    }
+                                                    this.c_index++;
+                                                    this.options[this.c_index].scrollIntoView();
+                                                },
+                                            };
+                                        }
+                                    </script>
                                 </div>
                             </div>
                         </div>
