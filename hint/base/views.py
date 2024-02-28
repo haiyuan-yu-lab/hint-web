@@ -1,6 +1,10 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.db.models import Q
 from base.models import Organism, Protein, Interaction
+import logging
+
+
+log = logging.getLogger("main")
 
 
 def home(request):
@@ -11,7 +15,6 @@ def home(request):
     orgs = (Protein.objects
             .order_by().values_list("organism", flat=True).distinct())
     context["organisms"] = Organism.objects.filter(pk__in=orgs)
-    print(len(orgs))
     return render(request, "home.html", context)
 
 
@@ -30,25 +33,30 @@ def faq(request):
 def search_proteins(request):
     context = {}
     if request.method == "POST":
-        query = request.POST.get("protein-name", "")
-        if query:
+        protein_query = request.POST.get("protein-name", "")
+        # if there is no search term, no need to return anything
+        if protein_query:
             protein_qs = Protein.objects
-            proteins = protein_qs.filter(
-                Q(uniprot_accession__icontains=query)
+            if "organism" in request.POST:
+                tax_id = int(request.POST["organism"])
+                protein_qs = protein_qs.filter(organism__tax_id=tax_id)
+            protein_qs = protein_qs.filter(
+                Q(uniprot_accession__icontains=protein_query)
             )
-            if len(proteins) > 0:
-                context["proteins"] = proteins
+            context["proteins"] = protein_qs
     return render(request, "components/protein-search.html", context)
 
 
 def network_viewer(request):
     context = {}
     if request.method == "POST":
-        query = request.POST.get("protein-accession", "")
-        if query:
-            protein = get_object_or_404(Protein, uniprot_accession=query)
+        protein_selection = request.POST.getlist("selected_proteins[]")
+        if len(protein_selection) > 0:
+            log.info(f"protein selection has {len(protein_selection)} items")
+            proteins = Protein.objects.filter(
+                uniprot_accession__in=protein_selection)
             interactions = Interaction.objects.filter(
-                Q(p1=protein) | Q(p2=protein)
+                Q(p1__in=proteins) | Q(p2__in=proteins)
             )
             context["main_interactions"] = interactions
             # collect all proteins in these interactions
@@ -56,10 +64,15 @@ def network_viewer(request):
             for interaction in interactions:
                 main_interactors.add(interaction.p1)
                 main_interactors.add(interaction.p2)
-            # remove main protein to reduce redundant interactions
-            main_interactors -= protein
+            # remove selected proteins to reduce redundant interactions
+            main_interactors -= set(p for p in proteins)
             neighbors_interactions = Interaction.objects.filter(
                 Q(p1__in=main_interactors) & Q(p2__in=main_interactors)
             )
             context["neighbors_interactions"] = neighbors_interactions
+            # TODO: filter based on `evidence-type` and `quality`. It should
+            # apply to `interactions`, and `neighbors_interactions` above.
+            # First filter the `interactions` by their supporting evidence
+            # metadata, and then retrieve the `neighbors_interactions` also
+            # with the same filter.
     return render(request, "network-viewer.html", context)

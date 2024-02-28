@@ -1,22 +1,32 @@
 {% if proteins is defined %}
-    <ul id="protein-search-list" 
-        class="max-h-72 scroll-py-2 overflow-y-auto py-2 text-sm text-gray-800"
-        x-ref="listbox"
-        role="listbox">
-        <!-- Active: "bg-indigo-600 text-white" -->
-    {% for protein in proteins %}
-        <li class="cursor-default select-none px-4 py-2"
-            :class="c_index === {{loop.index0}}? 'bg-indigo-600 text-white': ''"
-            x-ref="protein_{{ loop.index0 }}"
-            value="{{ protein.uniprot_accession }}"
-            x-on:mouseenter="c_index = {{loop.index0}}"
-            x-on:mouseleave="c_index = -1"
-            x-on:click="selected = {{loop.index0}}"
-            x-on:keyup.enter.prevent="selected = {{loop.index0}}"
-            role="option"
-            tabindex="-1">{{ protein.uniprot_accession }}</li>
-    {% endfor %}
-    </ul>
+    {% if proteins | length > 0 %}
+        <ul id="protein-search-list" 
+            class="max-h-72 scroll-py-2 overflow-y-auto py-2 text-sm text-gray-800"
+            x-ref="listbox"
+            role="listbox">
+            <!-- Active: "bg-indigo-600 text-white" -->
+        {% for protein in proteins %}
+            <li class="cursor-default select-none px-4 py-2"
+                :class="c_index === {{loop.index0}}? 'bg-indigo-600 text-white': ''"
+                x-ref="protein_{{ loop.index0 }}"
+                value="{{ protein.uniprot_accession }}"
+                x-on:mouseenter="c_index = {{loop.index0}}"
+                x-on:mouseleave="c_index = -1"
+                x-on:click="selected = {{loop.index0}}"
+                x-on:keyup.enter.prevent="selected = {{loop.index0}}"
+                role="option"
+                tabindex="-1">
+                {{ protein.uniprot_accession }}
+                {% if protein.gene_accession != "" %}
+                    ({{ protein.gene_accession }})
+                {% endif %}
+                - {{ protein.entry_name }}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p class="p-4 text-sm text-red-500">Protein not found.</p>
+    {% endif %}
 {% else %}
-    <p class="p-4 text-sm text-gray-500">No proteins found.</p>
+    <p class="p-4 text-sm text-gray-500">Search for a protein accession or name, click or press Enter to add up to 10 proteins.</p>
 {% endif %}

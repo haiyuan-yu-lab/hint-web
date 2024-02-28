@@ -13,40 +13,19 @@
          alt="HINT">
     <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
         <div>
-            <form>
+            <form action="/network-viewer" method="post">{{ csrf_input }}
                 <legend class="block text-sm font-medium leading-6 text-gray-900">Interactome Explorer</legend>
                 <div class="mt-2 -space-y-px rounded-md bg-white shadow-sm">
-                    <div x-data="protein_autocomplete">
+                    <div x-data="protein_multiselect">
                         <div class="relative z-10" role="dialog" aria-modal="true">
-                            <!--
-                                Background backdrop, show/hide based on modal state.
-
-                                Entering: "ease-out duration-300"
-                                From: "opacity-0"
-                                To: "opacity-100"
-                                Leaving: "ease-in duration-200"
-                                From: "opacity-100"
-                                To: "opacity-0"
-                            -->
-                            <div class="inset-0 bg-gray-500 bg-opacity-25 transition-opacity"></div>
-
                             <div class="inset-0 z-10 overflow-y-auto">
-                                <!--
-                                    Command palette, show/hide based on modal state.
-
-                                    Entering: "ease-out duration-300"
-                                    From: "opacity-0 scale-95"
-                                    To: "opacity-100 scale-100"
-                                    Leaving: "ease-in duration-200"
-                                    From: "opacity-100 scale-100"
-                                    To: "opacity-0 scale-95"
-                                -->
+                                <!-- Command palette -->
                                 <div class="mx-auto
                                             transform
                                             divide-y
                                             divide-gray-100
                                             overflow-hidden
-                                            rounded-xl
+                                            rounded-t-xl
                                             bg-white
                                             shadow-2xl
                                             ring-1
@@ -76,28 +55,52 @@
                                                hx-post="/search-proteins"
                                                hx-trigger="input changed delay:500ms"
                                                hx-target="#protein-search-results"
+                                               hx-include="[name='organism'], [name='evidence-type'], [name='quality']"
                                                placeholder="Search..."
                                                role="combobox"
                                                aria-expanded="false"
                                                aria-controls="options">
                                     </div>
+                                    <!-- Active Search -->
                                     <div id="protein-search-results"
                                          x-on:htmx:after-swap="loadItems($event)"
                                          tabindex="-1"
                                          >
+                                        <p class="p-4 text-sm text-gray-500">Search for a protein accession or name, click or press Enter to add up to 10 proteins.</p>
                                     </div>
+                                    <!-- Selection container -->
                                     <div id="protein-search-selection">
+                                        <legend class="block text-sm font-medium leading-6 text-gray-900 px-2">Selected Proteins</legend>
                                         <ul>
-                                        <template x-for="protein in Array.from(selection)">
-                                            <li class="protein-pill"
-                                                x-text="protein"
-                                                :value="protein"></li>
-                                        </template>
+                                            <template x-for="protein in Array.from(selection)">
+                                                <li class="items-center
+                                                           block
+                                                           rounded-md 
+                                                           bg-indigo-50
+                                                           px-2
+                                                           py-1
+                                                           text-sm
+                                                           font-medium
+                                                           text-indigo-700
+                                                           ring-1
+                                                           ring-inset
+                                                           ring-indigo-600/20"
+                                                    :value="protein.accession">
+                                                    <span x-text="protein.display"></span>
+                                                    <button x-on:click.prevent="unselect($data.protein.accession)">
+                                                        Remove
+                                                    </button>
+                                                    <input
+                                                        type="hidden"
+                                                        name="selected_proteins[]"
+                                                        :value="protein.accession">
+                                                </li>
+                                            </template>
                                         <ul>
                                     </div>
                                     <script>
                                         document.addEventListener('alpine:init', () => {
-                                            Alpine.data("protein_autocomplete", () => ({
+                                            Alpine.data("protein_multiselect", () => ({
                                                 options: [],
                                                 c_index: -1,
                                                 selected: null,
@@ -106,7 +109,11 @@
                                                 init() {
                                                     this.$watch("selected", () => {
                                                         let protein_accession = this.options[this.selected].getAttribute("value");
-                                                        this.selection.add(protein_accession);
+                                                        let display_text = this.options[this.selected].textContent;
+                                                        this.selection.add({
+                                                            "accession": protein_accession,
+                                                            "display": display_text,
+                                                        });
                                                     });
                                                 },
                                                 loadItems: function (e) {
@@ -117,6 +124,15 @@
                                                     if (this.options.length > 0) {
                                                         this.c_index = 0;
                                                     }
+                                                },
+                                                unselect: function (accession) {
+                                                    console.log("unselect", accession);
+                                                    this.selection.forEach((protein) => {
+                                                        console.log("protein", protein);
+                                                        if (protein.accession == accession){
+                                                            this.selection.delete(protein);
+                                                        }
+                                                    });
                                                 },
                                                 selectCurrent: function () {
                                                     this.selected = this.c_index;
@@ -152,10 +168,9 @@
                     </div>
                     <div class="flex -space-x-px">
                         <div class="w-1/3 min-w-0 flex-1">
-                            <label for="organism" class="sr-only">Country</label>
+                            <label for="organism" class="sr-only">Organism</label>
                             <select id="organism"
                                     name="organism"
-                                    autocomplete="organism-name"
                                     class="relative block w-full rounded-none rounded-bl-md border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                 {% for o in organisms %}
                                     <option value="{{ o.tax_id }}">{{ o.scientific_name }}</option> 
@@ -178,7 +193,6 @@
                             <label for="evidence-type" class="sr-only">Evidence Type</label>
                             <select id="evidence-type"
                                     name="evidence-type"
-                                    autocomplete="evidence-type"
                                     class="relative block w-full rounded-none border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                 <option value="binary">Binary</option>
                                 <option value="cocomp">Co-complex</option>
@@ -189,7 +203,6 @@
                             <label for="quality" class="sr-only">Quality</label>
                             <select id="quality"
                                     name="quality"
-                                    autocomplete="quality"
                                     class="relative block w-full rounded-none rounded-br-md border-0 bg-transparent py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                 <option value="high-quality">High quality</option>
                                 <option value="all">All</option>
@@ -197,6 +210,20 @@
                         </div>
                     </div>
                 </div>
+                <button
+                    type="submit"
+                    class="rounded-md
+                        bg-indigo-600
+                        px-3 py-2
+                        text-sm font-semibold
+                        text-white shadow-sm
+                        hover:bg-indigo-500
+                        focus-visible:outline
+                        focus-visible:outline-2
+                        focus-visible:outline-offset-2
+                        focus-visible:outline-indigo-600">
+                    Submit
+                </button>
             </form>
         </div>
         <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">What is HINT</h1>
