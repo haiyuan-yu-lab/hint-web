@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+import string
 
 
 # ============================================================================
@@ -36,6 +37,22 @@ class Organism(models.Model):
     name = models.TextField()
     scientific_name = models.TextField()
 
+    def get_filename_prefix(self) -> str:
+        """
+        Makes the scientific name removing any character that's not a letter
+        or digit.
+
+        Useful for linking the filenames from older versions of HINT to an
+        organism.
+
+        Returns
+        -------
+        str
+            The filename prefix
+        """
+        return "".join([c for c in self.scientific_name
+                        if c in string.ascii_letters + string.digits])
+
 
 class Protein(models.Model):
     # we support UniProt and Gene Symbols, max_lengths are 25, which may be
@@ -54,6 +71,15 @@ class Tissue(models.Model):
 
     @classmethod
     def get_default_pk(cls):
+        """
+        Default tissue for the database. Applied to any interaction that does
+        not have tissue information. If it doesn't exist yet, it gets created.
+
+        Returns
+        -------
+        Tissue
+            A tissue with name and description set to "Default Tissue"
+        """
         tissue, created = cls.objects.get_or_create(
             name="Default Tissue",
             description="Default Tissue"

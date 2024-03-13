@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.db.models import Q
 from base.models import Organism, Protein, Interaction
+from base.hint_old_versions import get_old_versions
 import logging
 
 
@@ -22,6 +23,13 @@ def download(request):
     context = {}
     context["active"] = "download"
     return render(request, "download.html", context)
+
+
+def old_versions(request):
+    context = {}
+    context["active"] = "download"
+    get_old_versions()
+    return render(request, "old-versions.html", context)
 
 
 def faq(request):
