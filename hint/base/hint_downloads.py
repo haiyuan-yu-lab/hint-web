@@ -123,7 +123,7 @@ def get_downloadable_files(
             dir_y, dir_m = [int(i) for i in download_dir.name.split("-")]
         except ValueError:
             continue
-        if not in_range(dir_y, dir_m, year, month):
+        if not in_range(dir_y, dir_m, year, month, include_previous):
             continue
         for hint_file in download_dir.glob("*.txt"):
             for org, prefix in prefixes_dict.items():
