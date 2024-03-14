@@ -117,3 +117,32 @@ class Evidence(models.Model):
     tissue = models.ForeignKey(Tissue,
                                on_delete=models.CASCADE,
                                default=Tissue.get_default_pk)
+
+# ============================================================================
+#                             Versioning and rotation
+# ============================================================================
+
+
+class HintVersion(models.Model):
+    year = models.IntegerField()
+    month = models.IntegerField()
+
+    @classmethod
+    def get_latest_version(cls):
+        """
+        Returns the latest version of the Hint interactions loaded for display.
+
+        Each time the database is loaded, all previous interactions are cleaned
+        and this value is recreated in the `load_data.py` script.
+
+        Returns
+        -------
+        HintVersion
+            Latest loaded HINT version
+        """
+        return cls.objects.latest("year", "month")
+
+
+class DownloadFileMetadata(models.Model):
+    full_path = models.TextField()
+    interaction_count = models.IntegerField(default=0)

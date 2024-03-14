@@ -1,0 +1,19 @@
+{% macro organism_links(organism, organism_data) -%}
+<h1>{{ organism.scientific_name }}</h1>
+<table class="min-w-full divide-y divide-gray-300">
+    <thead class="bg-gray-50">
+        <tr>
+            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Organism</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Allowed entries</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Examples</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200 bg-white">
+        <tr>
+            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium italic text-gray-900 sm:pl-6">{{ organism.scientific_name }}</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Entrez Gene ID/Gene names</td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">10092/ARPC5</td>
+        </tr>
+    </tbody>
+</table>
+{% endmacro %}

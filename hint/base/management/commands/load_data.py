@@ -1,11 +1,14 @@
 from django.core.management.base import BaseCommand
+from django.conf import settings
 from base.models import (MITerm, Pubmed, Organism, Protein, Tissue,
-                         Interaction, Evidence)
+                         Interaction, Evidence, HintVersion)
 from pathlib import Path
 from goapfp.io.obo_parser import OboParser
-from typing import Dict
+from typing import Dict, List, Tuple
 import logging
+import shutil
 
+STATIC_ROOT = Path(settings.STATIC_ROOT)
 
 log = logging.getLogger("main")
 
@@ -15,6 +18,68 @@ REPORT_EVERY_N = {
     "evidence": 50000,
     "interaction": 10000,
 }
+
+
+def divide_evidence_by_quality(evidence: str) -> Tuple[List[str]]:
+    evidences = evidence.split("|")
+    ht = []
+    lc = []
+    for e in evidences:
+        if e[-2:] == "HT":
+            ht.append(e)
+        elif e[-2:] == "LC":
+            lc.append(e)
+    return lc, ht
+
+
+def create_downloadable_files(year: int,
+                              month: int,
+                              hint_directory: Path):
+    raw_files = STATIC_ROOT / "raw_hint_files" / f"{year}-{month:02}"
+    raw_files.mkdir()
+    file_header = "Uniprot_A\tUniprot_B\tGene_A\tGene_B\tpmid:method:quality\n"
+    in_files = sorted(hint_directory.glob("**/*.txt"))
+    valid_suffixes = {
+        "binary_all.txt": ("_lcb_all.txt", "_htb_all.txt"),
+        "binary_hq.txt": ("_lcb_hq.txt", "_htb_all.txt"),
+        "both_all.txt": (None, None),
+        "both_hq.txt": (None, None),
+        "cocomp_all.txt": ("_lcc_all.txt", "_htc_all.txt"),
+        "cocomp_hq.txt": ("_lcc_all.txt", "_htc_all.txt"),
+    }
+    for infile in in_files:
+        lc_suffix = None
+        ht_suffix = None
+        for suffix, (lc, ht) in valid_suffixes.items():
+            if infile.match(f"*{suffix}"):
+                lc_suffix = lc
+                ht_suffix = ht
+                break
+            continue
+        dest_file = raw_files / infile.name
+        shutil.copy2(infile, dest_file)
+        if lc_suffix is not None and ht_suffix is not None:
+            base = infile.name.split("_")[0]
+            lc_file = raw_files / f"{base}{lc_suffix}"
+            ht_file = raw_files / f"{base}{ht_suffix}"
+            with (infile.open() as f,
+                  lc_file.open("w") as lc_f,
+                  ht_file.open("w") as ht_f):
+                header = True
+                for line in f:
+                    if header:
+                        header = False
+                        lc_f.write(file_header)
+                        ht_f.write(file_header)
+                        continue
+                    parts = line.strip().split("\t")
+                    lc_ev, ht_ev = divide_evidence_by_quality(parts[-1])
+                    if lc_ev:
+                        lc_f.write("\t".join(parts[:-1]))
+                        lc_f.write(f"\t{'|'.join(lc_ev)}\n")
+                    if ht_ev:
+                        ht_f.write("\t".join(parts[:-1]))
+                        ht_f.write(f"\t{'|'.join(ht_ev)}\n")
 
 
 def insert_mi_ontology(mi_ontology: Path) -> Dict:
@@ -164,11 +229,30 @@ def insert_interactions(hint_output_dir: Path,
     log.info(f"Processed all files with a total of {c} interactions.")
 
 
-def run(hint_oputput_dir: Path,
+def valid_version(year: int, month: int) -> bool:
+    raw_files = STATIC_ROOT / "raw_hint_files"
+    log.info(f"{raw_files} exists asd: {raw_files.exists()}")
+    for oldver_dir in raw_files.glob("*/"):
+        log.info(f"found {oldver_dir} in the raw folder")
+        try:
+            dir_year, dir_month = [int(i) for i in oldver_dir.name.split("-")]
+            if dir_year == year and dir_month == month:
+                return False
+        except ValueError:
+            log.info(f"{oldver_dir} does not match the naming convention")
+            continue
+    return True
+
+
+def run(year: int,
+        month: int,
+        hint_oputput_dir: Path,
         mi_ontology: Path,
         protein_metadata: Path,
         taxonomy_metadata: Path,
         tissue_metadata: Path) -> None:
+    create_downloadable_files(year, month, hint_oputput_dir)
+    HintVersion.objects.create(year=year, month=month)
     mi_terms = insert_mi_ontology(mi_ontology)
     organisms = insert_organisms(taxonomy_metadata)
     proteins = insert_proteins(protein_metadata, organisms)
@@ -179,6 +263,12 @@ def run(hint_oputput_dir: Path,
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
+        parser.add_argument("year",
+                            type=int,
+                            help="Year to use for this version of HINT")
+        parser.add_argument("month",
+                            type=int,
+                            help="Month to use for this version of HINT")
         parser.add_argument("hint_output_directory",
                             help="Directory containing the output files"
                                  " calculated using the HINT pipeline.")
@@ -208,12 +298,17 @@ class Command(BaseCommand):
         protein_metadata = Path(options["protein_metadata"])
         taxonomy_metadata = Path(options["taxonomy_metadata"])
         tissue_metadata = Path(options["tissue_metadata"])
+        year = options["year"]
+        month = options["month"]
         assert hint_output_dir.is_dir(), "HINT directory doesn't exist."
         assert mi_ontology.is_file(), "PSI-MI ontology file doesn't exist."
         assert protein_metadata.is_file(), "Protein metadata doesn't exist."
         assert taxonomy_metadata.is_file(), "Taxonomy metadata doesn't exist."
         assert tissue_metadata.is_file(), "Tissue metadata doesn't exist."
-        run(hint_output_dir,
+        assert valid_version(year, month), f"HINT {year}-{month:02} exists"
+        run(year,
+            month,
+            hint_output_dir,
             mi_ontology,
             protein_metadata,
             taxonomy_metadata,

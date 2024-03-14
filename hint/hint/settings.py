@@ -120,7 +120,8 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         "verbose": {
-            "format": "{asctime} - {name} - {levelname} - {message}",
+            "format": "{asctime} - {levelname} - {message}",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
             "style": "{"
         }
     },

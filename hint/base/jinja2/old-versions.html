@@ -1,6 +1,10 @@
+{% import 'components/raw-file-links-table.html' as table %}
 {% extends 'base.html' %}
 
 {% block content %}
 <div class="bg-white px-6 py-32 lg:px-8">
+    {% for org, mdata in raw_files.items() %}
+        {{ table.organism_links(org, mdata) }}
+    {% endfor %}
 </div>
 {% endblock %}

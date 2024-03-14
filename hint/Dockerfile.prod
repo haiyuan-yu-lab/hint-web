@@ -2,7 +2,7 @@
 # BUILDER #
 ###########
 
-FROM python:3.11.2-slim-bullseye as builder
+FROM python:3.12.2-slim-bullseye as builder
 
 WORKDIR /usr/src/app
 
@@ -33,7 +33,7 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requir
 
 # TODO: use a Docker builder for prod
 
-FROM python:3.11.2-slim-bullseye
+FROM python:3.12.2-slim-bullseye
 
 # create add user
 # RUN mkdir -p /home/app

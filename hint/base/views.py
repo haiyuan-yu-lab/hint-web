@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.db.models import Q
-from base.models import Organism, Protein, Interaction
-from base.hint_old_versions import get_old_versions
+from base.models import Organism, Protein, Interaction, HintVersion
+from base.hint_downloads import get_downloadable_files
 import logging
 
 
@@ -22,13 +22,19 @@ def home(request):
 def download(request):
     context = {}
     context["active"] = "download"
+    hint_version = HintVersion.get_latest_version()
+    context["raw_files"] = get_downloadable_files(hint_version.year,
+                                                  hint_version.month)
     return render(request, "download.html", context)
 
 
 def old_versions(request):
     context = {}
     context["active"] = "download"
-    get_old_versions()
+    hint_version = HintVersion.get_latest_version()
+    context["raw_files"] = get_downloadable_files(hint_version.year,
+                                                  hint_version.month - 1,
+                                                  include_previous=True)
     return render(request, "old-versions.html", context)
 
 
