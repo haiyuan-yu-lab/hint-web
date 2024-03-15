@@ -1,5 +1,9 @@
+{% import 'components/raw-file-links-table.html' as table %}
 {% extends 'base.html' %}
 
+{% block head %}
+    <script defer src="{{ static('js/alpine.min.js') }}"></script>
+{% endblock %}
 
 {% block header %}
 <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -8,8 +12,32 @@
 {% endblock %}
 
 {% block content %}
-<img class="mx-auto h-auto w-auto"
-     src="{{ static('img/new_logo_blue.png') }}"
-     alt="HINT">
+<div class="bg-white px-6 py-32 lg:px-8">
+    <div>
+        <p class="font-semibold">
+            HINT version:
+            <span class="rounded-md
+                         py-1 px-2
+                         text-xs font-medium
+                         ring-1 ring-inset
+                         text-green-700 bg-green-50
+                         ring-green-600/20">
+                {{ hint_version.year }}-{{ hint_version.month }}
+            </span>
+        </p>
+        <p class="font-semibold pb-10">
+            <a href="{{ url('old-versions') }}"
+               class="text-sm font-semibold leading-6 text-indigo-600"
+                >
+                Browse older versions <span aria-hidden="true">&rarr;</span>
+            </a>
+        </p>
+    </div>
+    <div class="divide-y divide-slate-200">
+        {% for org, mdata in raw_files.items() %}
+            {{ table.organism_links(org, mdata, loop.index, False) }}
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
 

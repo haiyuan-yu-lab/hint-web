@@ -23,6 +23,7 @@ def download(request):
     context = {}
     context["active"] = "download"
     hint_version = HintVersion.get_latest_version()
+    context["hint_version"] = hint_version
     context["raw_files"] = get_downloadable_files(hint_version.year,
                                                   hint_version.month)
     return render(request, "download.html", context)

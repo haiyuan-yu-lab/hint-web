@@ -41,11 +41,11 @@ def create_downloadable_files(year: int,
     in_files = sorted(hint_directory.glob("**/*.txt"))
     valid_suffixes = {
         "binary_all.txt": ("_lcb_all.txt", "_htb_all.txt"),
-        "binary_hq.txt": ("_lcb_hq.txt", "_htb_all.txt"),
+        "binary_hq.txt": ("_lcb_hq.txt", "_htb_hq.txt"),
         "both_all.txt": (None, None),
         "both_hq.txt": (None, None),
         "cocomp_all.txt": ("_lcc_all.txt", "_htc_all.txt"),
-        "cocomp_hq.txt": ("_lcc_all.txt", "_htc_all.txt"),
+        "cocomp_hq.txt": ("_lcc_hq.txt", "_htc_hq.txt"),
     }
     for infile in in_files:
         lc_suffix = None

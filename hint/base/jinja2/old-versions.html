@@ -1,10 +1,23 @@
 {% import 'components/raw-file-links-table.html' as table %}
 {% extends 'base.html' %}
 
+{% block head %}
+    <script defer src="{{ static('js/alpine.min.js') }}"></script>
+{% endblock %}
+
+{% block header %}
+<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-bold tracking-tight text-gray-900">Download older versions of HINT</h1>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="bg-white px-6 py-32 lg:px-8">
-    {% for org, mdata in raw_files.items() %}
-        {{ table.organism_links(org, mdata) }}
-    {% endfor %}
+    <div class="divide-y divide-slate-200">
+        {% for org, mdata in raw_files.items() %}
+            {{ table.organism_links(org, mdata, loop.index, True) }}
+        {% endfor %}
+    </div>
 </div>
+
 {% endblock %}

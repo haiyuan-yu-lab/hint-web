@@ -1,19 +1,121 @@
-{% macro organism_links(organism, organism_data) -%}
-<h1>{{ organism.scientific_name }}</h1>
-<table class="min-w-full divide-y divide-gray-300">
-    <thead class="bg-gray-50">
-        <tr>
-            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Organism</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Allowed entries</th>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Examples</th>
-        </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-200 bg-white">
-        <tr>
-            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium italic text-gray-900 sm:pl-6">{{ organism.scientific_name }}</td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">Entrez Gene ID/Gene names</td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">10092/ARPC5</td>
-        </tr>
-    </tbody>
-</table>
+{% macro group_pill(group) %}
+    <div class="rounded-md
+                py-1 px-2
+                text-xs font-medium ring-1 ring-inset
+            {% if group == "high quality" %}
+                text-green-700 bg-green-50 ring-green-600/20
+            {% else %}
+                text-rose-700 bg-rose-50 ring-rose-600/20
+            {% endif %}
+                ">
+        {{ group }}
+    </div>
+{% endmacro %}
+
+
+{% macro table_row(data_dir, group, quality) %}
+<tr>
+    {% for e_type in ["binary", "co-complex"] %}
+        {% if e_type in data_dir %}
+            <td class="relative py-5 px-6">
+                <div class="flex gap-x-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <div class="flex-auto">
+                        <div class="flex items-start gap-x-3">
+                            <div class="text-sm
+                                        font-medium
+                                        leading-6
+                                        text-gray-900
+                                        hover:text-indigo-600
+                                        ">
+                                <a href="{{ data_dir[e_type][0] }}">
+                                    {{ data_dir[e_type][2] }}
+                                </a>
+                            </div>
+                            {{ group_pill(group) }}
+                        </div>
+                        <div class="mt-1 text-xs leading-5 text-gray-500">
+                            {{ data_dir[e_type][1] }} interactions
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 right-full h-px w-screen bg-gray-100"></div>
+                <div class="absolute bottom-0 left-0 h-px w-screen bg-gray-100"></div>
+            </td>
+        {% else %}
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+            </td>
+        {% endif %}
+    {% endfor %}
+</tr>
+{% endmacro %}
+
+{% macro organism_links(organism, organism_data, accordion_index, display_version) %}
+<div x-data="{ expanded: false }" class="py-2">
+    <h2>
+        <button
+            id="downloads-title-{{ accordion_index }}"
+            type="button"
+            class="flex items-center justify-between w-full text-left font-semibold py-2"
+            @click="expanded = !expanded"
+            :aria-expanded="expanded"
+            aria-controls="downloads-content-{{ accordion_index }}"
+        >
+            <span>{{ organism.scientific_name }}</span>
+            <svg class="fill-indigo-500 shrink-0 ml-8" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <rect y="7" width="16" height="2" rx="1" class="transform origin-center transition duration-200 ease-out" :class="{'!rotate-180': expanded}" />
+                <rect y="7" width="16" height="2" rx="1" class="transform origin-center rotate-90 transition duration-200 ease-out" :class="{'!rotate-180': expanded}" />
+            </svg>
+        </button>
+    </h2>
+    <div
+        id="downloads-content-{{ accordion_index }}"
+        role="region"
+        aria-labelledby="downloads-title-{{ accordion_index }}"
+        class="grid text-sm text-slate-600 overflow-hidden transition-all duration-300 ease-in-out"
+        :class="expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+        >
+        <div class="overflow-hidden border-t border-gray-100">
+            <div class="mx-auto max-w-7xl">
+                <div class="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
+                    <table class="w-full text-left">
+                        <thead class="sr-only">
+                            <tr>
+                                <th>File 1</th>
+                                <th>File 2</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            {% for (year, month), date_dir in organism_data.items() %}
+                                {% if display_version %}
+                                <tr class="border-t border-gray-200">
+                                    <th colspan="2" scope="colgroup" class="bg-gray-50 py-2 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3">{{ year }}-{{ month }}</th>
+                                </tr>
+                                {% endif %}
+                                {% for group in ["high quality", "all"] %}
+                                    {% if group in date_dir %}
+                                        {% for quality in ["all", "high throughput", "literature curated"] %}
+                                            {% if quality in date_dir[group] %}
+                                                {{ table_row(date_dir[group][quality], group, quality) }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                                {#
+                                {% if "high quality" in date_dir %}
+                                {{ table_element([date_dir["high quality"]["all"],
+                                date_dir["high quality"]["all"],
+                                date_dir["high quality"]["all"]]) }}
+                                {% endif %}
+                                #}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endmacro %}

@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 from django.contrib.staticfiles.storage import staticfiles_storage
 from base.models import Organism, Protein, DownloadFileMetadata
 import logging
+import pprint
 
 
 log = logging.getLogger("main")
@@ -31,18 +32,32 @@ def add_metadata(downloads: Dict,
                  evidence_type: str,
                  group: str,
                  quality: str) -> None:
+    quality_map = {
+        "all": "",
+        "literature curated": "Literature curated",
+        "high throughput": "High-throughput"
+    }
+    display_label = f"{quality_map[quality]} {evidence_type}"
+
     if org not in downloads:
         downloads[org] = {}
+
     if (year, month) not in downloads[org]:
         downloads[org][(year, month)] = {}
     date_dict = downloads[org][(year, month)]
+
     if group not in date_dict:
         date_dict[group] = {}
-    gr_dict = date_dict[group]
-    if evidence_type not in gr_dict:
-        gr_dict[evidence_type] = {}
-    e_dict = gr_dict[evidence_type]
-    e_dict[quality] = (url, metadata.interaction_count)
+    g_dict = date_dict[group]
+
+    if quality not in g_dict:
+        g_dict[quality] = {}
+    q_dict = g_dict[quality]
+
+    q_dict[evidence_type] = (url, metadata.interaction_count, display_label)
+    # if evidence_type not in q_dict:
+    #     e_dict = q_dict[evidence_type]
+    # e_dict[quality] = (url, metadata.interaction_count)
 
 
 def in_range(year: int,
@@ -89,8 +104,8 @@ def get_downloadable_files(
         organism_id: {
             (year, month): {
                 group: {
-                    evindence_type: {
-                        quality: (URL, num_interactions)
+                    quality: {
+                        evidence_type: (URL, num_interactions)
                     }
                 }
             },
@@ -150,4 +165,6 @@ def get_downloadable_files(
                                          e_type,
                                          gr,
                                          qual)
+    pprint.pprint(downloads)
+    log.info(pprint.pformat(downloads))
     return downloads
