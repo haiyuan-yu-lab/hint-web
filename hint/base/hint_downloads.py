@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 from django.contrib.staticfiles.storage import staticfiles_storage
 from base.models import Organism, Protein, DownloadFileMetadata
 import logging
@@ -7,6 +7,14 @@ import pprint
 
 
 log = logging.getLogger("main")
+VALID_SUFFIXES = {
+    "binary_all.txt": ("_lcb_all.txt", "_htb_all.txt"),
+    "binary_hq.txt": ("_lcb_hq.txt", "_htb_hq.txt"),
+    "both_all.txt": (None, None),
+    "both_hq.txt": (None, None),
+    "cocomp_all.txt": ("_lcc_all.txt", "_htc_all.txt"),
+    "cocomp_hq.txt": ("_lcc_hq.txt", "_htc_hq.txt"),
+}
 
 
 # from https://stackoverflow.com/a/68385697
@@ -119,11 +127,11 @@ def get_downloadable_files(
     prefixes_dict = {o: o.get_filename_prefix() for o in all_organisms}
     # file name suffix -> (evidence type, group, quality)
     valid_suffixes = {
-        "binary_all.txt": ("binary", "all", "all"),
+        "binary_all.txt": ("binary", "all qualities", "all"),
         "binary_hq.txt": ("binary", "high quality", "all"),
-        "both_all.txt": ("both", "all", "all"),
+        "both_all.txt": ("both", "all qualities", "all"),
         "both_hq.txt": ("both", "high quality", "all"),
-        "cocomp_all.txt": ("co-complex", "all", "all"),
+        "cocomp_all.txt": ("co-complex", "all qualities", "all"),
         "cocomp_hq.txt": ("co-complex", "high quality", "all"),
         "lcb_hq.txt": ("binary", "high quality", "literature curated"),
         "lcc_hq.txt": ("co-complex", "high quality", "literature curated"),
@@ -168,3 +176,51 @@ def get_downloadable_files(
     pprint.pprint(downloads)
     log.info(pprint.pformat(downloads))
     return downloads
+
+
+def divide_evidence_by_quality(evidence: str) -> Tuple[List[str]]:
+    evidences = evidence.split("|")
+    ht = []
+    lc = []
+    for e in evidences:
+        if e[-2:] == "HT":
+            ht.append(e)
+        elif e[-2:] == "LC":
+            lc.append(e)
+    return lc, ht
+
+
+def divide_downloadable_files(hint_directory: Path):
+    file_header = "Uniprot_A\tUniprot_B\tGene_A\tGene_B\tpmid:method:quality\n"
+    in_files = sorted(hint_directory.glob("**/*.txt"))
+    for infile in in_files:
+        lc_suffix = None
+        ht_suffix = None
+        for suffix, (lc, ht) in VALID_SUFFIXES.items():
+            if infile.match(f"*{suffix}"):
+                lc_suffix = lc
+                ht_suffix = ht
+                break
+            continue
+        if lc_suffix is not None and ht_suffix is not None:
+            base = infile.name.split("_")[0]
+            lc_file = hint_directory / f"{base}{lc_suffix}"
+            ht_file = hint_directory / f"{base}{ht_suffix}"
+            with (infile.open() as f,
+                  lc_file.open("w") as lc_f,
+                  ht_file.open("w") as ht_f):
+                header = True
+                for line in f:
+                    if header:
+                        header = False
+                        lc_f.write(file_header)
+                        ht_f.write(file_header)
+                        continue
+                    parts = line.strip().split("\t")
+                    lc_ev, ht_ev = divide_evidence_by_quality(parts[-1])
+                    if lc_ev:
+                        lc_f.write("\t".join(parts[:-1]))
+                        lc_f.write(f"\t{'|'.join(lc_ev)}\n")
+                    if ht_ev:
+                        ht_f.write("\t".join(parts[:-1]))
+                        ht_f.write(f"\t{'|'.join(ht_ev)}\n")

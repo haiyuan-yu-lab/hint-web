@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from base.models import (MITerm, Pubmed, Organism, Protein, Tissue,
                          Interaction, Evidence, HintVersion)
+from base import hint_downloads
 from pathlib import Path
 from goapfp.io.obo_parser import OboParser
 from typing import Dict, List, Tuple
@@ -20,16 +21,6 @@ REPORT_EVERY_N = {
 }
 
 
-def divide_evidence_by_quality(evidence: str) -> Tuple[List[str]]:
-    evidences = evidence.split("|")
-    ht = []
-    lc = []
-    for e in evidences:
-        if e[-2:] == "HT":
-            ht.append(e)
-        elif e[-2:] == "LC":
-            lc.append(e)
-    return lc, ht
 
 
 def create_downloadable_files(year: int,
@@ -37,49 +28,15 @@ def create_downloadable_files(year: int,
                               hint_directory: Path):
     raw_files = STATIC_ROOT / "raw_hint_files" / f"{year}-{month:02}"
     raw_files.mkdir()
-    file_header = "Uniprot_A\tUniprot_B\tGene_A\tGene_B\tpmid:method:quality\n"
     in_files = sorted(hint_directory.glob("**/*.txt"))
-    valid_suffixes = {
-        "binary_all.txt": ("_lcb_all.txt", "_htb_all.txt"),
-        "binary_hq.txt": ("_lcb_hq.txt", "_htb_hq.txt"),
-        "both_all.txt": (None, None),
-        "both_hq.txt": (None, None),
-        "cocomp_all.txt": ("_lcc_all.txt", "_htc_all.txt"),
-        "cocomp_hq.txt": ("_lcc_hq.txt", "_htc_hq.txt"),
-    }
     for infile in in_files:
-        lc_suffix = None
-        ht_suffix = None
-        for suffix, (lc, ht) in valid_suffixes.items():
+        for suffix, (lc, ht) in hint_downloads.VALID_SUFFIXES.items():
             if infile.match(f"*{suffix}"):
-                lc_suffix = lc
-                ht_suffix = ht
                 break
             continue
         dest_file = raw_files / infile.name
         shutil.copy2(infile, dest_file)
-        if lc_suffix is not None and ht_suffix is not None:
-            base = infile.name.split("_")[0]
-            lc_file = raw_files / f"{base}{lc_suffix}"
-            ht_file = raw_files / f"{base}{ht_suffix}"
-            with (infile.open() as f,
-                  lc_file.open("w") as lc_f,
-                  ht_file.open("w") as ht_f):
-                header = True
-                for line in f:
-                    if header:
-                        header = False
-                        lc_f.write(file_header)
-                        ht_f.write(file_header)
-                        continue
-                    parts = line.strip().split("\t")
-                    lc_ev, ht_ev = divide_evidence_by_quality(parts[-1])
-                    if lc_ev:
-                        lc_f.write("\t".join(parts[:-1]))
-                        lc_f.write(f"\t{'|'.join(lc_ev)}\n")
-                    if ht_ev:
-                        ht_f.write("\t".join(parts[:-1]))
-                        ht_f.write(f"\t{'|'.join(ht_ev)}\n")
+    hint_downloads.divide_downloadable_files(raw_files)
 
 
 def insert_mi_ontology(mi_ontology: Path) -> Dict:
