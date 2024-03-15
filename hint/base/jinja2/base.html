@@ -79,9 +79,33 @@
                 <div class="md:hidden" id="mobile-menu">
                     <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
                         <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
-                        <a href="#" class="bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium" aria-current="page">Home</a>
-                        <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Download</a>
-                        <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium">FAQ</a>
+                        <a href="{{ url('home') }}" aria-current="page"
+                            {% if active == 'home' %}
+                                class="bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium"
+                            {% else %}
+                                class="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium"
+                            {% endif %}
+                        >
+                            Home
+                        </a>
+                        <a href="{{ url('download') }}" aria-current="page"
+                            {% if active == 'download' %}
+                                class="bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium"
+                            {% else %}
+                                class="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium"
+                            {% endif %}
+                        >
+                            Download
+                        </a>
+                        <a href="{{ url('faq') }}" aria-current="page"
+                            {% if active == 'faq' %}
+                                class="bg-gray-900 text-white block rounded-md px-3 py-2 text-base font-medium"
+                            {% else %}
+                                class="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium"
+                            {% endif %}
+                        >
+                            FAQ
+                        </a>
                     </div>
                 </div>
             </nav>

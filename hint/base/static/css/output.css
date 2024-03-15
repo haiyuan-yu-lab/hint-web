@@ -1028,6 +1028,10 @@ select {
   max-height: 18rem;
 }
 
+.max-h-56 {
+  max-height: 14rem;
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -2085,6 +2089,10 @@ select {
 
   .lg\:grid {
     display: grid;
+  }
+
+  .lg\:h-56 {
+    height: 14rem;
   }
 
   .lg\:max-w-none {
