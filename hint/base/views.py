@@ -56,7 +56,7 @@ def search_proteins(request):
                 tax_id = int(request.POST["organism"])
                 protein_qs = protein_qs.filter(organism__tax_id=tax_id)
             protein_qs = protein_qs.filter(
-                Q(uniprot_accession__icontains=protein_query)
+                Q(uniprot_accession__icontains=protein_query) | Q(gene_accession__icontains=protein_query)
             )
             context["proteins"] = protein_qs
     return render(request, "components/protein-search.html", context)
