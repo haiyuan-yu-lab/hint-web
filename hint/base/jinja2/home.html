@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block head %}
-    <script defer src="{{ static('js/alpine.morph.js') }}"></script>
     <script defer src="{{ static('js/alpine.min.js') }}"></script>
 {% endblock %}
 
@@ -87,7 +86,13 @@
                                                            ring-indigo-600/20"
                                                     :value="protein.accession">
                                                     <span x-text="protein.display"></span>
-                                                    <button x-on:click.prevent="unselect($data.protein.accession)">
+                                                    <button 
+                                                        class="float-end
+                                                               text-sm
+                                                               font-medium
+                                                               text-red-600
+                                                               hover:text-red-500"
+                                                        x-on:click.prevent="unselect($data.protein.accession)">
                                                         Remove
                                                     </button>
                                                     <input
