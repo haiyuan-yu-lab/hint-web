@@ -115,7 +115,7 @@ def insert_proteins(protein_metadata: Path, organisms: Dict) -> Dict:
             if not header_read:
                 header_read = True
                 continue
-            uid, gid, name, taxid, desc = line.strip().split("\t")
+            uid, gid, name, taxid, desc = line.strip('\n').split("\t")
             taxid = int(taxid)
             insert_buffer.append(
                 Protein(uniprot_accession=uid,

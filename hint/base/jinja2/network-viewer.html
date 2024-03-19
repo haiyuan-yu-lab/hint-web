@@ -8,53 +8,73 @@
 
 <div class="bg-white px-6 py-32 lg:px-8">
 {% if main_interactions is defined %}
-    <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
-        <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">Network visualization</h1>
-        <h2>Interactions involving selection</h2>
-        <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Protein 1</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Protein 2</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {% for interaction in main_interactions %}
-                <tr>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p1.uniprot_accession }}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p2.uniprot_accession }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% if neighbors_interactions is defined %}
-        <h2>Interactions between neighbors</h2>
-        <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Protein 1</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Protein 2</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {% for interaction in neighbors_interactions %}
-                <tr>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p1.uniprot_accession }}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p2.uniprot_accession }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-    </div>
+        <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
+            <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">Network visualization</h1>
+            <h2>Interactions involving selection</h2>
+            <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Protein 1</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Protein 2</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for interaction in main_interactions %}
+                    <tr>
+                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <!-- {{ interaction.p1.gene_accession }} -->
+                            {% if interaction.p1.gene_accession %}
+                                {{ interaction.p1.gene_accession }}
+                            {% else %}
+                                {{ interaction.p1.uniprot_accession }}
+                            {% endif %}
+                        </td>
+                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <!-- {{ interaction.p2.gene_accession }} -->
+                            {% if interaction.p2.gene_accession %}
+                                {{ interaction.p2.gene_accession }}
+                            {% else %}
+                                {{ interaction.p2.uniprot_accession }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if neighbors_interactions is defined %}
+            <h2>Interactions between neighbors</h2>
+            <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Protein 1</th>
+                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Protein 2</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for interaction in neighbors_interactions %}
+                    <tr>
+                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <!-- {{ interaction.p1.gene_accession }} -->
+                            {% if interaction.p1.gene_accession %}
+                                {{ interaction.p1.gene_accession }}
+                            {% else %}
+                                {{ interaction.p1.uniprot_accession }}
+                            {% endif %}
+                        </td>
+                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <!-- {{ interaction.p2.gene_accession }} -->
+                            {% if interaction.p2.gene_accession %}
+                                {{ interaction.p2.gene_accession }}
+                            {% else %}
+                                {{ interaction.p2.uniprot_accession }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
 {% else %}
     <h2>No results were found.</h2>
 {% endif %}
