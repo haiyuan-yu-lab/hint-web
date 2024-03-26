@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.db.models import Q
 from base.models import Organism, Protein, Interaction, HintVersion
 from base.hint_downloads import get_downloadable_files
+from typing import Dict
 import logging
 
 
@@ -56,10 +57,53 @@ def search_proteins(request):
                 tax_id = int(request.POST["organism"])
                 protein_qs = protein_qs.filter(organism__tax_id=tax_id)
             protein_qs = protein_qs.filter(
-                Q(uniprot_accession__icontains=protein_query) | Q(gene_accession__icontains=protein_query)
+                Q(uniprot_accession__icontains=protein_query) |
+                Q(gene_accession__icontains=protein_query)
             )
             context["proteins"] = protein_qs
     return render(request, "components/protein-search.html", context)
+
+
+def build_cytoscape_dict(main_nodes, neighbors,
+                         main_interactions, neighbors_interactions) -> Dict:
+    colors = {
+        "main": "#3175b0",
+        "neighbor": "#b06831"
+    }
+    encoded_nodes = [{
+        "data": {
+            "id": p.display_name(network=True),
+            "c": colors["main"]
+        }
+    } for p in main_nodes]
+    encoded_nodes.extend({
+        "data": {
+            "id": p.display_name(network=True),
+            "c": colors["neighbor"]
+        }
+    } for p in neighbors)
+    edges = [{
+        "data": {
+            "id": f"{i.pk}",
+            "source": i.p1.display_name(network=True),
+            "target": i.p2.display_name(network=True),
+            "c": colors["neighbor"]
+        }
+    } for i in main_interactions]
+
+    edges.extend({
+        "data": {
+            "id": f"{i.pk}",
+            "source": i.p1.display_name(network=True),
+            "target": i.p2.display_name(network=True),
+            "c": colors["neighbor"]
+        }
+    } for i in neighbors_interactions)
+
+    return {
+        "nodes": encoded_nodes,
+        "edges": edges
+    }
 
 
 def network_viewer(request):
@@ -90,4 +134,10 @@ def network_viewer(request):
             # First filter the `interactions` by their supporting evidence
             # metadata, and then retrieve the `neighbors_interactions` also
             # with the same filter.
+
+            context["network_data"] = build_cytoscape_dict(
+                proteins,
+                main_interactors,
+                interactions,
+                neighbors_interactions)
     return render(request, "network-viewer.html", context)

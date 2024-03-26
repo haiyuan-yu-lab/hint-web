@@ -64,6 +64,13 @@ class Protein(models.Model):
     organism = models.ForeignKey(Organism,
                                  on_delete=models.CASCADE)
 
+    def display_name(self, network: bool = False) -> str:
+        if self.gene_accession:
+            return self.gene_accession
+        if network:
+            return self.uniprot_accession.split("-")[0]
+        return self.uniprot_accession
+
 
 class Tissue(models.Model):
     name = models.TextField(unique=True)
