@@ -66,22 +66,13 @@ def search_proteins(request):
 
 def build_cytoscape_dict(main_nodes, neighbors,
                          main_interactions, neighbors_interactions) -> Dict:
-    colors = {
-        "main": "#3175b0",
-        "neighbor": "#b06831"
-    }
-    encoded_nodes = [{
-        "data": {
-            "id": p.display_name(network=True),
-            "c": colors["main"]
-        }
-    } for p in main_nodes]
-    encoded_nodes.extend({
-        "data": {
-            "id": p.display_name(network=True),
-            "c": colors["neighbor"]
-        }
-    } for p in neighbors)
+    colors = {"main": "#3175b0", "neighbor": "#b06831"}
+    encoded_nodes = [
+        {"data": {"id": p.display_name(network=True), "c": colors["main"]}}
+        for p in main_nodes]
+    encoded_nodes.extend(
+        {"data": {"id": p.display_name(network=True), "c": colors["neighbor"]}}
+        for p in neighbors)
     edges = [{
         "data": {
             "id": f"{i.pk}",

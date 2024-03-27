@@ -135,8 +135,8 @@ def get_downloadable_files(
         "cocomp_hq.txt": ("co-complex", "high quality", "all"),
         "lcb_hq.txt": ("binary", "high quality", "literature curated"),
         "lcc_hq.txt": ("co-complex", "high quality", "literature curated"),
-        "htb_hq.txt": ("binary", "high quality", "high throughput"),
-        "htc_hq.txt": ("co-complex", "high quality", "high throughput"),
+        "htb_hq.txt": ("binary", "", "high throughput"),
+        "htc_hq.txt": ("co-complex", "", "high throughput"),
     }
 
     downloads = {}

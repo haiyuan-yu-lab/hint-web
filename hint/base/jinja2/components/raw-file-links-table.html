@@ -1,15 +1,17 @@
 {% macro group_pill(group) %}
-    <div class="rounded-md
-                py-1 px-2
-                text-xs font-medium ring-1 ring-inset
-            {% if group == "high quality" %}
-                text-green-700 bg-green-50 ring-green-600/20
-            {% else %}
-                text-rose-700 bg-rose-50 ring-rose-600/20
-            {% endif %}
-                ">
-        {{ group }}
-    </div>
+    {% if group %}
+        <div class="rounded-md
+                    py-1 px-2
+                    text-xs font-medium ring-1 ring-inset
+                {% if group == "high quality" %}
+                    text-green-700 bg-green-50 ring-green-600/20
+                {% else %}
+                    text-rose-700 bg-rose-50 ring-rose-600/20
+                {% endif %}
+                    ">
+            {{ group }}
+        </div>
+    {% endif %}
 {% endmacro %}
 
 
@@ -94,7 +96,7 @@
                                     <th colspan="2" scope="colgroup" class="bg-gray-50 py-2 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3">{{ year }}-{{ month }}</th>
                                 </tr>
                                 {% endif %}
-                                {% for group in ["high quality", "all qualities"] %}
+                                {% for group in ["high quality", "", "all qualities"] %}
                                     {% if group in date_dir %}
                                         {% for quality in ["all", "high throughput", "literature curated"] %}
                                             {% if quality in date_dir[group] %}

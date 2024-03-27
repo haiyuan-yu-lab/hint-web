@@ -6,6 +6,111 @@
     <script src="{{ static('js/net-viewer.js') }}"></script>
 {% endblock %}
 
+{% macro interaction_table(interactions) %}
+<table class="min-w-full divide-y divide-gray-300">
+    <thead class="bg-gray-50">
+        <tr>
+            <th scope="col"
+                class="py-3.5
+                       pl-4
+                       pr-3
+                       text-left
+                       text-sm
+                       font-semibold
+                       text-gray-900
+                       sm:pl-6">
+                Protein 1</th>
+            <th scope="col"
+                class="px-3
+                       py-3.5
+                       text-left
+                       text-sm
+                       font-semibold
+                       text-gray-900">
+                Protein 2</th>
+            <th scope="col"
+                class="px-3
+                       py-3.5
+                       text-left
+                       text-sm
+                       font-semibold
+                       text-gray-900">
+                Evidence</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200 bg-white">
+        {% for interaction in interactions %}
+        <tr>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {{ interaction.p1.display_name() }}
+            </td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {{ interaction.p2.display_name() }}
+            </td>
+            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {% for evidence in interaction.evidence_set.all() %}
+                    <div class="block
+                                py-0.5    
+                                flex-auto
+                                items-start
+                                gap-x-1">
+                        <a href="https://pubmed.ncbi.nlm.nih.gov/{{ evidence.pubmed.pubmed_id }}/" class="rounded-tl
+                                     rounded-bl    
+                                     py-1 px-2
+                                     text-xs font-medium ring-1
+                                     ring-inset
+                                     ring-neutral-600/20 text-neutral-700 bg-neutral-50
+                                     hover:ring-neutral-800/20 hover:text-neutral-50 hover:bg-neutral-800
+                                     ">
+                            PubMed: {{ evidence.pubmed.pubmed_id }}
+                            <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                            </svg>
+                        </a>
+                        <a href="http://purl.obolibrary.org/obo/MI_{{ '{:0>4}'.format(evidence.method.mi_id) }}" class="py-1 px-2
+                                     text-xs font-medium ring-1
+                                     ring-inset
+                                     ring-rose-600/20 text-rose-700 bg-rose-50
+                                     hover:ring-rose-800/20 hover:text-rose-50 hover:bg-rose-800
+                                     ">
+                            {{ "{:0>4}".format(evidence.method.mi_id) }} | {{ evidence.method.name }}
+                            <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                            </svg>
+                        </a>
+                        <span class="py-1 px-2
+                                     text-xs font-medium ring-1
+                                     ring-inset
+                                     {% if evidence.quality == "HT" %}
+                                     ring-sky-600/20 text-sky-700 bg-sky-50
+                                     {% else %}
+                                     ring-amber-600/20 text-amber-700 bg-amber-50
+                                     {% endif %}
+                                     ">
+                            {{ evidence.get_quality_display() }}
+                        </span>
+                        <span class="rounded-tr
+                                     rounded-br
+                                     py-1 px-2
+                                     text-xs font-medium ring-1
+                                     ring-inset
+                                     {% if evidence.evidence_type == 0 %}
+                                     ring-lime-600/20 text-lime-700 bg-lime-50
+                                     {% else %}
+                                     ring-fuchsia-600/20 text-fuchsia-700 bg-fuchsia-50
+                                     {% endif %}
+                                     ">
+                            {{ evidence.get_evidence_type_display() }}
+                        </span>
+                    </div>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}
+
 {% block content %}
 
 <div class="bg-white px-6 py-32 lg:px-8">
@@ -26,48 +131,10 @@
     <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
         <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">Network visualization</h1>
         <h2>Interactions involving selection</h2>
-        <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Protein 1</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Protein 2</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {% for interaction in main_interactions %}
-                <tr>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p1.display_name() }}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p2.display_name() }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {{ interaction_table(main_interactions) }}
         {% if neighbors_interactions is defined %}
-        <h2>Interactions between neighbors</h2>
-        <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Protein 1</th>
-                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Protein 2</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {% for interaction in neighbors_interactions %}
-                <tr>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p1.display_name() }}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ interaction.p1.display_name() }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <h2>Interactions between neighbors</h2>
+            {{ interaction_table(neighbors_interactions) }}
         {% endif %}
     </div>
 {% else %}
