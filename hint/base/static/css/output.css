@@ -1935,6 +1935,11 @@ select {
   color: rgb(255 241 242 / var(--tw-text-opacity));
 }
 
+.hover\:text-indigo-400:hover {
+  --tw-text-opacity: 1;
+  color: rgb(129 140 248 / var(--tw-text-opacity));
+}
+
 .hover\:ring-neutral-800\/20:hover {
   --tw-ring-color: rgb(38 38 38 / 0.2);
 }

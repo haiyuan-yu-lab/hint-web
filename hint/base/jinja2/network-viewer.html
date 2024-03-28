@@ -42,10 +42,22 @@
         {% for interaction in interactions %}
         <tr>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {{ interaction.p1.display_name() }}
+                <a href="https://www.uniprot.org/uniprotkb/{{ interaction.p1.uniprot_accession }}/entry"
+                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400">
+                    {{ interaction.p1.display_name() }}
+                    <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                </a>
             </td>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {{ interaction.p2.display_name() }}
+                <a href="https://www.uniprot.org/uniprotkb/{{ interaction.p2.uniprot_accession }}/entry"
+                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400">
+                    {{ interaction.p2.display_name() }}
+                    <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                </a>
             </td>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                 {% for evidence in interaction.evidence_set.all() %}
