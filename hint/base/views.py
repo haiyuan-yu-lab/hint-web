@@ -7,6 +7,7 @@ import logging
 
 
 log = logging.getLogger("main")
+NETWORK_NODE_LIMIT = 50
 
 
 def home(request):
@@ -66,6 +67,8 @@ def search_proteins(request):
 
 def build_cytoscape_dict(main_nodes, neighbors,
                          main_interactions, neighbors_interactions) -> Dict:
+    if len(main_nodes) + len(neighbors) > NETWORK_NODE_LIMIT:
+        return {"message": "too-many-nodes"}
     colors = {"main": "#3175b0", "neighbor": "#b06831"}
     encoded_nodes = [
         {"data": {"id": p.display_name(network=True), "c": colors["main"]}}
@@ -102,7 +105,11 @@ def network_viewer(request):
     if request.method == "POST":
         protein_selection = request.POST.getlist("selected_proteins[]")
         if len(protein_selection) > 0:
+            evidence_type = request.POST.get("evidence-type")
+            quality = request.POST.get("quality")
             log.info(f"protein selection has {len(protein_selection)} items")
+            log.info(f"etype: {evidence_type}")
+            log.info(f"quality: {quality}")
             proteins = Protein.objects.filter(
                 uniprot_accession__in=protein_selection)
             interactions = Interaction.objects.filter(

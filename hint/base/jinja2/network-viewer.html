@@ -42,18 +42,42 @@
         {% for interaction in interactions %}
         <tr>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {% if interaction.p1.gene_accession %}
+                    <a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene={{ interaction.p1.gene_accession }}"
+                       class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+                       target="_blank">
+                        {{ interaction.p1.gene_accession }}
+                    <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    </a>
+                    <br>
+                {% endif %}
                 <a href="https://www.uniprot.org/uniprotkb/{{ interaction.p1.uniprot_accession }}/entry"
-                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400">
-                    {{ interaction.p1.display_name() }}
+                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+                   target="_blank">
+                    {{ interaction.p1.uniprot_accession }}
                     <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                     </svg>
                 </a>
             </td>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {% if interaction.p2.gene_accession %}
+                    <a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene={{ interaction.p2.gene_accession }}"
+                       class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+                       target="_blank">
+                        {{ interaction.p2.gene_accession }}
+                    <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                    </a>
+                    <br>
+                {% endif %}
                 <a href="https://www.uniprot.org/uniprotkb/{{ interaction.p2.uniprot_accession }}/entry"
-                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400">
-                    {{ interaction.p2.display_name() }}
+                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+                   target="_blank">
+                    {{ interaction.p2.uniprot_accession }}
                     <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                     </svg>
@@ -66,25 +90,29 @@
                                 flex-auto
                                 items-start
                                 gap-x-1">
-                        <a href="https://pubmed.ncbi.nlm.nih.gov/{{ evidence.pubmed.pubmed_id }}/" class="rounded-tl
-                                     rounded-bl    
-                                     py-1 px-2
-                                     text-xs font-medium ring-1
-                                     ring-inset
-                                     ring-neutral-600/20 text-neutral-700 bg-neutral-50
-                                     hover:ring-neutral-800/20 hover:text-neutral-50 hover:bg-neutral-800
-                                     ">
-                            PubMed: {{ evidence.pubmed.pubmed_id }}
+                        <a href="https://pubmed.ncbi.nlm.nih.gov/{{ evidence.pubmed.pubmed_id }}/"
+                           class="rounded-tl
+                                  rounded-bl    
+                                  py-1 px-2
+                                  text-xs font-medium ring-1
+                                  ring-inset
+                                  ring-neutral-600/20 text-neutral-700 bg-neutral-50
+                                  hover:ring-neutral-800/20 hover:text-neutral-50 hover:bg-neutral-800
+                                  "
+                           target="_blank">
+                            pubmed: {{ evidence.pubmed.pubmed_id }}
                             <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                             </svg>
                         </a>
-                        <a href="http://purl.obolibrary.org/obo/MI_{{ '{:0>4}'.format(evidence.method.mi_id) }}" class="py-1 px-2
-                                     text-xs font-medium ring-1
-                                     ring-inset
-                                     ring-rose-600/20 text-rose-700 bg-rose-50
-                                     hover:ring-rose-800/20 hover:text-rose-50 hover:bg-rose-800
-                                     ">
+                        <a href="http://purl.obolibrary.org/obo/mi_{{ '{:0>4}'.format(evidence.method.mi_id) }}"
+                           class="py-1 px-2
+                                  text-xs font-medium ring-1
+                                  ring-inset
+                                  ring-rose-600/20 text-rose-700 bg-rose-50
+                                  hover:ring-rose-800/20 hover:text-rose-50 hover:bg-rose-800
+                                  "
+                           target="_blank">
                             {{ "{:0>4}".format(evidence.method.mi_id) }} | {{ evidence.method.name }}
                             <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -93,7 +121,7 @@
                         <span class="py-1 px-2
                                      text-xs font-medium ring-1
                                      ring-inset
-                                     {% if evidence.quality == "HT" %}
+                                     {% if evidence.quality == "ht" %}
                                      ring-sky-600/20 text-sky-700 bg-sky-50
                                      {% else %}
                                      ring-amber-600/20 text-amber-700 bg-amber-50
@@ -125,22 +153,26 @@
 
 {% block content %}
 
-<div class="bg-white px-6 py-32 lg:px-8">
+<div class="bg-white px-6 py-12 lg:px-8">
 {% if main_interactions is defined %}
-    <div id="cy"
-         class="w-full
-                aspect-square
-                block
-                bg-gray-50
-                ">
-    </div>
-    <script>
-        document.addEventListener('alpine:init', () => {
-            var network_data = {{ network_data | tojson }};
-            plot_network(network_data);
-        });
-    </script>
-    <div class="mx-auto max-w-3xl text-base leading-7 text-gray-700">
+    {% if "message" in network_data %}
+    {% else %}
+        <div id="cy"
+             class="w-1/2
+                    aspect-square
+                    block
+                    mx-auto
+                    bg-gray-50
+                    ">
+        </div>
+        <script>
+            document.addEventListener('alpine:init', () => {
+                var network_data = {{ network_data | tojson }};
+                plot_network(network_data);
+            });
+        </script>
+    {% endif %}
+    <div class="mx-auto max-w-5xl text-base leading-7 text-gray-700">
         <h1 class="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pt-28 pb-10">Network visualization</h1>
         <h2>Interactions involving selection</h2>
         {{ interaction_table(main_interactions) }}
