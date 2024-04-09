@@ -114,7 +114,7 @@
                                             :aria-expanded="all_qualities.show"
                                             aria-controls="expand-quality-{{ accordion_index }}"
                                         >
-                                            <span>Show all interactomes</span>
+                                        <span><span x-text="all_qualities.show ? 'Hide' : 'Show'"></span> all interactomes</span>
                                             <svg class="fill-indigo-500 shrink-0 ml-8" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
                                                 <rect y="7" width="16" height="2" rx="1" class="transform origin-center transition duration-200 ease-out" :class="{'!rotate-180': all_qualities}" />
                                                 <rect y="7" width="16" height="2" rx="1" class="transform origin-center rotate-90 transition duration-200 ease-out" :class="{'!rotate-180': all_qualities}" />
@@ -136,13 +136,6 @@
                                         {% endif %}
                                     {% endfor %}
                             </tbody>
-                            {#
-                            {% if "high quality" in date_dir %}
-                            {{ table_element([date_dir["high quality"]["all"],
-                            date_dir["high quality"]["all"],
-                            date_dir["high quality"]["all"]]) }}
-                            {% endif %}
-                            #}
                         {% endfor %}
                     </table>
                 </div>
