@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.db.models import Q
-from base.models import Organism, Protein, Interaction, HintVersion
+from base.models import Organism, Protein, Interaction, HintVersion, Evidence
 from base.hint_downloads import get_downloadable_files
 from typing import Dict
 import logging
@@ -115,6 +115,16 @@ def network_viewer(request):
             interactions = Interaction.objects.filter(
                 Q(p1__in=proteins) | Q(p2__in=proteins)
             )
+            if evidence_type == "binary":
+                interactions = interactions.filter(
+                    evidence__evidence_type=Evidence.EvidenceType.BINARY)
+            elif evidence_type == "cocomp":
+                interactions = interactions.filter(
+                    evidence__evidence_type=\
+                    Evidence.EvidenceType.CO_COMPLEX)
+            if quality == "high-quality":
+                interactions = interactions.filter(
+                    evidence__quality=Evidence.Quality.LITERATURE_CURATED)
             context["main_interactions"] = interactions
             # collect all proteins in these interactions
             main_interactors = set()
