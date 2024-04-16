@@ -1,5 +1,4 @@
-
-var plot_network = function(data){
+var plot_network = function(data) {
     var cy = cytoscape({
         container: document.getElementById("cy"), // container to render in
         elements: data,

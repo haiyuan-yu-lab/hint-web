@@ -1,0 +1,66 @@
+{% macro evidence_td(evidence_list) %}
+    {% for ev in evidence_list %}
+        <div class="block
+                    py-0.5    
+                    flex-auto
+                    items-start
+                    gap-x-1">
+            <a href='https://pubmed.ncbi.nlm.nih.gov/{{ ev.pubmed.pubmed_id }}/'
+               class="rounded-tl
+                      rounded-bl    
+                      py-1 px-2
+                      text-xs font-medium ring-1
+                      ring-inset
+                      ring-neutral-600/20 text-neutral-700 bg-neutral-50
+                      hover:ring-neutral-800/20 hover:text-neutral-50 hover:bg-neutral-800
+                      "
+               target="_blank">
+                pubmed: {{ ev.pubmed.pubmed_id }}
+                <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+            </a>
+            <a href='http://purl.obolibrary.org/obo/MI_{{ "{:0>4}".format(ev.method.mi_id) }}'
+               class="py-1 px-2
+                      text-xs font-medium ring-1
+                      ring-inset
+                      ring-rose-600/20 text-rose-700 bg-rose-50
+                      hover:ring-rose-800/20 hover:text-rose-50 hover:bg-rose-800
+                      "
+               target="_blank">
+                {{ "{:0>4}".format(ev.method.mi_id) }} | {{ ev.method.name }}
+                <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+            </a>
+            <span class="py-1 px-2
+                         text-xs font-medium ring-1
+                         ring-inset
+                         {% if ev.quality == "HT" %}
+                         ring-sky-600/20 text-sky-700 bg-sky-50
+                         {% else %}
+                         ring-amber-600/20 text-amber-700 bg-amber-50
+                         {% endif %}
+                         ">
+                {{ ev.get_quality_display() }}
+            </span>
+            <span class="rounded-tr
+                         rounded-br
+                         py-1 px-2
+                         text-xs font-medium ring-1
+                         ring-inset
+                         {% if ev.evidence_type == 0 %}
+                         ring-lime-600/20 text-lime-700 bg-lime-50
+                         {% else %}
+                         ring-fuchsia-600/20 text-fuchsia-700 bg-fuchsia-50
+                         {% endif %}
+                         ">
+                {{ ev.get_evidence_type_display() }}
+            </span>
+        </div>
+    {% endfor %}
+{% endmacro %}
+
+{% if evidence_list is defined %}
+    {{ evidence_td(evidence_list) }}
+{% endif %}

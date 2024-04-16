@@ -191,7 +191,6 @@ def divide_evidence_by_quality(evidence: str) -> Tuple[List[str]]:
 
 
 def divide_downloadable_files(hint_directory: Path):
-    file_header = "Uniprot_A\tUniprot_B\tGene_A\tGene_B\tpmid:method:quality\n"
     in_files = sorted(hint_directory.glob("**/*.txt"))
     for infile in in_files:
         lc_suffix = None
@@ -210,17 +209,37 @@ def divide_downloadable_files(hint_directory: Path):
                   lc_file.open("w") as lc_f,
                   ht_file.open("w") as ht_f):
                 header = True
+                evidence_index = -1
                 for line in f:
                     if header:
+                        log.info(f"{infile} has header\n{line}")
                         header = False
-                        lc_f.write(file_header)
-                        ht_f.write(file_header)
+                        parts = line.strip().split("\t")
+                        for i, p in enumerate(parts):
+                            if p == "pmid:method:quality":
+                                evidence_index = i
+                        lc_f.write(line)
+                        ht_f.write(line)
+                        log.info(f"{evidence_index=}")
+                        if evidence_index == 8:
+                            evidence_index = -1
                         continue
-                    parts = line.strip().split("\t")
-                    lc_ev, ht_ev = divide_evidence_by_quality(parts[-1])
+                    parts = line.strip("\n").split("\t")
+                    lc_ev, ht_ev = divide_evidence_by_quality(
+                        parts[evidence_index])
                     if lc_ev:
-                        lc_f.write("\t".join(parts[:-1]))
-                        lc_f.write(f"\t{'|'.join(lc_ev)}\n")
+                        lc_f.write("\t".join(parts[:evidence_index]))
+                        if len(parts) == evidence_index + 1:
+                            lc_f.write(f"\t{'|'.join(lc_ev)}\n")
+                        else:
+                            lc_f.write(f"\t{'|'.join(lc_ev)}\t")
+                            lc_f.write(
+                                f"\t{'\t'.join(parts[evidence_index+1:])}\n")
                     if ht_ev:
-                        ht_f.write("\t".join(parts[:-1]))
-                        ht_f.write(f"\t{'|'.join(ht_ev)}\n")
+                        ht_f.write("\t".join(parts[:evidence_index]))
+                        if len(parts) == evidence_index + 1:
+                            ht_f.write(f"\t{'|'.join(ht_ev)}\n")
+                        else:
+                            ht_f.write(f"\t{'|'.join(ht_ev)}\t")
+                            ht_f.write(
+                                f"\t{'\t'.join(parts[evidence_index+1:])}\n")

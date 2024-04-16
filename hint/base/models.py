@@ -59,7 +59,7 @@ class Protein(models.Model):
     # too long for the present, but maybe not enough in the future!
     uniprot_accession = models.CharField(max_length=25, unique=True)
     gene_accession = models.CharField(max_length=25)
-    entry_name = models.CharField(max_length=50, default="")
+    entry_name = models.CharField(max_length=250, default="")
     description = models.TextField()
     organism = models.ForeignKey(Organism,
                                  on_delete=models.CASCADE)

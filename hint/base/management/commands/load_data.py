@@ -21,8 +21,6 @@ REPORT_EVERY_N = {
 }
 
 
-
-
 def create_downloadable_files(year: int,
                               month: int,
                               hint_directory: Path):
@@ -115,16 +113,19 @@ def insert_proteins(protein_metadata: Path, organisms: Dict) -> Dict:
             if not header_read:
                 header_read = True
                 continue
-            uid, gid, name, taxid, desc = line.strip('\n').split("\t")
+            uid, taxid, gid, _, name, desc, _ = line.strip('\n').split("\t")
             taxid = int(taxid)
-            insert_buffer.append(
-                Protein(uniprot_accession=uid,
-                        gene_accession=gid,
-                        entry_name=name,
-                        description=desc,
-                        organism=organisms[taxid])
-            )
-            c += 1
+            try:
+                insert_buffer.append(
+                    Protein(uniprot_accession=uid,
+                            gene_accession=gid,
+                            entry_name=name,
+                            description=desc,
+                            organism=organisms[taxid])
+                )
+                c += 1
+            except KeyError:
+                log.info(f"taxid {taxid} not found in DB organisms")
             if c % REPORT_EVERY_N.get("protein", REPORT_EVERY_N_DEFAULT) == 0:
                 log.info(f"Loaded {c} proteins so far...")
     log.info(f"inserting {c} proteins...")
@@ -154,6 +155,12 @@ def insert_interactions(hint_output_dir: Path,
                 etype = Evidence.EvidenceType.BINARY
             elif "cocomp" in in_file.stem:
                 etype = Evidence.EvidenceType.CO_COMPLEX
+            if in_file.stem.startswith("binary"):
+                continue
+            if in_file.stem.startswith("cocomp"):
+                continue
+            if in_file.stem.startswith("both"):
+                continue
             if etype is None:
                 log.info(f"Skipping {in_file}, can't find evidence type")
                 continue
@@ -163,27 +170,71 @@ def insert_interactions(hint_output_dir: Path,
                 if not header_read:
                     header_read = True
                     continue
-                up_a, up_b, g_a, g_b, p_m_qs = line.strip().split("\t")
-                i, _ = Interaction.objects.get_or_create(p1=proteins[up_a],
-                                                         p2=proteins[up_b])
-                c += 1
-                if c % REPORT_EVERY_N.get("interaction",
-                                          REPORT_EVERY_N_DEFAULT) == 0:
-                    log.info(f"Processed {c} interactions so far...")
-                for p_m_q in p_m_qs.split("|"):
-                    pmid, method, quality = p_m_q.split(":")
-                    pmid = pmid
-                    method = int(method)
-                    if pmid not in pubmeds:
-                        pubmeds[pmid], _ = Pubmed.objects.get_or_create(
-                                pubmed_id=pmid, title="update_entry")
-                    evidence_buffer.append(Evidence(interaction=i,
-                                                    pubmed=pubmeds[pmid],
-                                                    method=mi_terms[method],
-                                                    quality=quality,
-                                                    evidence_type=etype))
+                up_a, up_b, g_a, g_b, p_m_qs, _ = line.strip().split("\t")
+                try:
+                    i, _ = Interaction.objects.get_or_create(p1=proteins[up_a],
+                                                             p2=proteins[up_b])
+                    c += 1
+                    if c % REPORT_EVERY_N.get("interaction",
+                                              REPORT_EVERY_N_DEFAULT) == 0:
+                        log.info(f"Processed {c} interactions so far...")
+                    for p_m_q in p_m_qs.split("|"):
+                        pmid, method, quality = p_m_q.split(":")
+                        pmid = pmid
+                        method = int(method)
+                        if pmid not in pubmeds:
+                            pubmeds[pmid], _ = Pubmed.objects.get_or_create(
+                                    pubmed_id=pmid, title="update_entry")
+                        evidence_buffer.append(Evidence(interaction=i,
+                                                        pubmed=pubmeds[pmid],
+                                                        method=mi_terms[method],
+                                                        quality=quality,
+                                                        evidence_type=etype))
+                except KeyError:
+                    log.info(f"could not load interaction {up_a} - {up_b}")
             Evidence.objects.bulk_create(evidence_buffer)
     log.info(f"Processed all files with a total of {c} interactions.")
+
+
+def get_database_organisms(organisms: Dict,
+                           hint_output_dir: Path):
+    """
+    The metadata files have too many proteins that won't be used in the 
+    database, this will restrict the inserted proteins only to the organisms
+    that will be displayed in the GUI
+    """
+    in_files = sorted(hint_output_dir.glob("**/*.txt"))
+    valid_organisms = {}
+    for in_file in in_files:
+        header_read = False
+        with in_file.open() as f:
+            if "all" not in in_file.name:
+                continue
+            etype = None
+            if "binary" in in_file.stem:
+                etype = Evidence.EvidenceType.BINARY
+            elif "cocomp" in in_file.stem:
+                etype = Evidence.EvidenceType.CO_COMPLEX
+            if in_file.stem.startswith("binary"):
+                continue
+            if in_file.stem.startswith("cocomp"):
+                continue
+            if in_file.stem.startswith("both"):
+                continue
+            if etype is None:
+                log.info(f"Skipping {in_file}, can't find evidence type")
+                continue
+            log.info(f"Processing {in_file} ...")
+            for line in f:
+                if not header_read:
+                    header_read = True
+                    continue
+                _, _, _, _, _, taxid = line.strip().split("\t")
+                taxid = int(taxid)
+                if taxid in valid_organisms:
+                    continue
+                valid_organisms[taxid] = organisms[taxid]
+    return valid_organisms
 
 
 def valid_version(year: int, month: int) -> bool:
@@ -212,7 +263,8 @@ def run(year: int,
     HintVersion.objects.create(year=year, month=month)
     mi_terms = insert_mi_ontology(mi_ontology)
     organisms = insert_organisms(taxonomy_metadata)
-    proteins = insert_proteins(protein_metadata, organisms)
+    db_organisms = get_database_organisms(organisms, hint_oputput_dir)
+    proteins = insert_proteins(protein_metadata, db_organisms)
     tissues = insert_tissues(tissue_metadata)
     insert_interactions(hint_oputput_dir, mi_terms, proteins, tissues)
 

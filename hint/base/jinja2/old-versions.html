@@ -13,7 +13,9 @@
 
 {% block content %}
 <div class="bg-white px-6 py-32 lg:px-8">
-    <div class="divide-y divide-slate-200">
+    <div class="divide-y divide-slate-200"
+         x-data="warning_modal" >
+        {{ table.confirmation_modal() }}
         {% for org, mdata in raw_files.items() %}
             {{ table.organism_links(org, mdata, loop.index, True) }}
         {% endfor %}

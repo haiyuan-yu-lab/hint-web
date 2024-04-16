@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from django.db.models import Q
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Q, Count
 from base.models import Organism, Protein, Interaction, HintVersion, Evidence
 from base.hint_downloads import get_downloadable_files
 from typing import Dict
@@ -8,6 +8,7 @@ import logging
 
 log = logging.getLogger("main")
 NETWORK_NODE_LIMIT = 50
+PAGINATION_STEP = 50
 
 
 def home(request):
@@ -67,6 +68,12 @@ def search_proteins(request):
 
 def build_cytoscape_dict(main_nodes, neighbors,
                          main_interactions, neighbors_interactions) -> Dict:
+
+    def display_name(i, n):
+        if i[f"p{n}__gene_accession"]:
+            return i[f"p{n}__gene_accession"]
+        return i[f"p{n}__uniprot_accession"]
+
     if len(main_nodes) + len(neighbors) > NETWORK_NODE_LIMIT:
         return {"message": "too-many-nodes"}
     colors = {"main": "#3175b0", "neighbor": "#b06831"}
@@ -78,18 +85,18 @@ def build_cytoscape_dict(main_nodes, neighbors,
         for p in neighbors)
     edges = [{
         "data": {
-            "id": f"{i.pk}",
-            "source": i.p1.display_name(network=True),
-            "target": i.p2.display_name(network=True),
+            "id": i["id"],
+            "source": display_name(i, 1),
+            "target": display_name(i, 2),
             "c": colors["neighbor"]
         }
     } for i in main_interactions]
 
     edges.extend({
         "data": {
-            "id": f"{i.pk}",
-            "source": i.p1.display_name(network=True),
-            "target": i.p2.display_name(network=True),
+            "id": i["id"],
+            "source": display_name(i, 1),
+            "target": display_name(i, 2),
             "c": colors["neighbor"]
         }
     } for i in neighbors_interactions)
@@ -101,51 +108,119 @@ def build_cytoscape_dict(main_nodes, neighbors,
 
 
 def network_viewer(request):
+
+    def make_filter(proteins, evidence_type, quality, main=True):
+        if main:
+            filters = (Q(p1__in=proteins) | Q(p2__in=proteins))
+        else:
+            filters = (Q(p1__in=proteins) & Q(p2__in=proteins))
+        if evidence_type == "binary":
+            filters &= Q(
+                evidence__evidence_type=Evidence.EvidenceType.BINARY)
+        elif evidence_type == "cocomp":
+            filters &= Q(
+                evidence__evidence_type=Evidence.EvidenceType.CO_COMPLEX)
+        if quality == "high-quality":
+            filters &= Q(
+                evidence__quality=Evidence.Quality.LITERATURE_CURATED)
+        return filters
+
+    interaction_colums = [
+        "id",
+        "p1__gene_accession",
+        "p1__uniprot_accession",
+        "p2__gene_accession",
+        "p2__uniprot_accession",
+        "num_evidence",
+    ]
     context = {}
     if request.method == "POST":
-        protein_selection = request.POST.getlist("selected_proteins[]")
+        protein_selection = set(request.POST.getlist("selected_proteins[]"))
         if len(protein_selection) > 0:
             evidence_type = request.POST.get("evidence-type")
             quality = request.POST.get("quality")
             log.info(f"protein selection has {len(protein_selection)} items")
             log.info(f"etype: {evidence_type}")
             log.info(f"quality: {quality}")
+            # pass the search filters through
+            context["evidence_type"] = evidence_type
+            context["quality"] = quality
             proteins = Protein.objects.filter(
                 uniprot_accession__in=protein_selection)
-            interactions = Interaction.objects.filter(
-                Q(p1__in=proteins) | Q(p2__in=proteins)
-            )
-            if evidence_type == "binary":
-                interactions = interactions.filter(
-                    evidence__evidence_type=Evidence.EvidenceType.BINARY)
-            elif evidence_type == "cocomp":
-                interactions = interactions.filter(
-                    evidence__evidence_type=\
-                    Evidence.EvidenceType.CO_COMPLEX)
-            if quality == "high-quality":
-                interactions = interactions.filter(
-                    evidence__quality=Evidence.Quality.LITERATURE_CURATED)
-            context["main_interactions"] = interactions
-            # collect all proteins in these interactions
-            main_interactors = set()
-            for interaction in interactions:
-                main_interactors.add(interaction.p1)
-                main_interactors.add(interaction.p2)
-            # remove selected proteins to reduce redundant interactions
-            main_interactors -= set(p for p in proteins)
-            neighbors_interactions = Interaction.objects.filter(
-                Q(p1__in=main_interactors) & Q(p2__in=main_interactors)
-            )
-            context["neighbors_interactions"] = neighbors_interactions
-            # TODO: filter based on `evidence-type` and `quality`. It should
-            # apply to `interactions`, and `neighbors_interactions` above.
-            # First filter the `interactions` by their supporting evidence
-            # metadata, and then retrieve the `neighbors_interactions` also
-            # with the same filter.
+            log.debug("proteins selected")
+            for prot in proteins:
+                log.debug(f"protein = {prot.pk}")
+            filters = make_filter(proteins, evidence_type, quality)
+            interactions_qs = (
+                Interaction.objects.filter(filters)
+                .annotate(num_evidence=Count("evidence"))
+                .order_by("-num_evidence", "id")
+                .distinct())
 
-            context["network_data"] = build_cytoscape_dict(
-                proteins,
-                main_interactors,
-                interactions,
-                neighbors_interactions)
+            interaction_count = interactions_qs.count()
+            context["main_load"] = interaction_count > PAGINATION_STEP
+            if interaction_count > NETWORK_NODE_LIMIT:
+                context["network_data"] = {"message": "too-many-nodes"}
+                interactions = (
+                    interactions_qs[:PAGINATION_STEP]
+                    .values(*interaction_colums))
+            else:
+                interactions = interactions_qs.values(*interaction_colums)
+                context["main_load"] = False
+            # group interactions for display
+            main_interactors = set()
+            for it in interactions:
+                main_interactors.add(it["p1__uniprot_accession"])
+                main_interactors.add(it["p2__uniprot_accession"])
+            context["main_interactions"] = interactions
+            context["main_interactions_count"] = interaction_count
+            log.debug(f"{interaction_count=}")
+            main_interactors -= protein_selection
+            main_interactors = Protein.objects.filter(
+                uniprot_accession__in=main_interactors)
+            filters = make_filter(main_interactors,
+                                  evidence_type,
+                                  quality,
+                                  main=False)
+            neighbors_interactions_qs = (
+                Interaction.objects.filter(filters)
+                .annotate(num_evidence=Count("evidence"))
+                .order_by("-num_evidence", "id")
+                .distinct())
+            neighbors_ints_count = neighbors_interactions_qs.count()
+            context["neigh_load"] = neighbors_ints_count > PAGINATION_STEP
+            if interaction_count > NETWORK_NODE_LIMIT:
+                neighbors_interactions = (
+                    neighbors_interactions_qs[:PAGINATION_STEP]
+                    .values(*interaction_colums))
+            else:
+                neighbors_interactions = (
+                    neighbors_interactions_qs
+                    .values(*interaction_colums))
+                context["neigh_load"] = False
+                context["network_data"] = build_cytoscape_dict(
+                    proteins,
+                    main_interactors,
+                    interactions,
+                    neighbors_interactions)
+            context["neighbors_interactions"] = neighbors_interactions
+            context["neighbors_interactions_count"] = neighbors_ints_count
+            log.debug(f"{neighbors_ints_count=}")
+            log.debug(f"{neighbors_interactions=}")
+
     return render(request, "network-viewer.html", context)
+
+
+def interaction_evidence(request, interaction_id, ev_type, ev_quality):
+    context = {}
+    interaction = get_object_or_404(Interaction, pk=interaction_id)
+    filters = Q(interaction=interaction)
+    if ev_type == "binary":
+        filters &= Q(evidence_type=Evidence.EvidenceType.BINARY)
+    elif ev_type == "cocomp":
+        filters &= Q(evidence_type=Evidence.EvidenceType.CO_COMPLEX)
+    if ev_quality == "high-quality":
+        filters &= Q(quality=Evidence.Quality.LITERATURE_CURATED)
+    context["evidence_list"] = Evidence.objects.filter(filters)
+    log.debug(f"{context=}")
+    return render(request, "components/evidence-detail.html", context)
