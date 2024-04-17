@@ -37,6 +37,19 @@ class Organism(models.Model):
     name = models.TextField()
     scientific_name = models.TextField()
 
+    CUSTOM_ORGANISM_ORDER = [
+        9606,
+        4932,
+        4896,
+        10090,
+        7227,
+        6239,
+        3702,
+        562,
+        10116,
+        4530,
+    ]
+
     def get_filename_prefix(self) -> str:
         """
         Makes the scientific name removing any character that's not a letter

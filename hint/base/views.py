@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Case, When, Value
 from base.models import Organism, Protein, Interaction, HintVersion, Evidence
 from base.hint_downloads import get_downloadable_files
 from typing import Dict
@@ -18,7 +18,14 @@ def home(request):
     # organism information
     orgs = (Protein.objects
             .order_by().values_list("organism", flat=True).distinct())
-    context["organisms"] = Organism.objects.filter(pk__in=orgs)
+    order = Case(
+        *[When(tax_id=tid, then=Value(i))
+          for i, tid in enumerate(Organism.CUSTOM_ORGANISM_ORDER)]
+    )
+    context["organisms"] = (
+        Organism.objects
+        .filter(pk__in=orgs)
+        .order_by(order))
     return render(request, "home.html", context)
 
 

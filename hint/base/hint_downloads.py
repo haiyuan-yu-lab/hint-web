@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Tuple, List
 from django.contrib.staticfiles.storage import staticfiles_storage
 from base.models import Organism, Protein, DownloadFileMetadata
+from django.db.models import Case, When, Value
 import logging
 import pprint
 
@@ -123,8 +124,16 @@ def get_downloadable_files(
     static_prefix = "raw_hint_files"
     orgs = (Protein.objects
             .order_by().values_list("organism", flat=True).distinct())
-    all_organisms = Organism.objects.filter(pk__in=orgs)
-    prefixes_dict = {o: o.get_filename_prefix() for o in all_organisms}
+    order = Case(
+        *[When(tax_id=tid, then=Value(i))
+          for i, tid in enumerate(Organism.CUSTOM_ORGANISM_ORDER)]
+    )
+    all_organisms = Organism.objects.filter(pk__in=orgs).order_by(order)
+    organisms_dict = {o.tax_id: {
+                          "org": o,
+                          "prefix": o.get_filename_prefix(),
+                      }
+                      for o in all_organisms}
     # file name suffix -> (evidence type, group, quality)
     valid_suffixes = {
         "binary_all.txt": ("binary", "all qualities", "all"),
@@ -139,9 +148,10 @@ def get_downloadable_files(
         "htc_hq.txt": ("co-complex", "", "high throughput"),
     }
 
-    downloads = {}
+    downloads = {o["org"]: {} for o in organisms_dict.values()}
+    keep_keys = []
 
-    for download_dir in raw_files.glob("*/"):
+    for download_dir in sorted(raw_files.glob("*/"), reverse=True):
         try:
             dir_y, dir_m = [int(i) for i in download_dir.name.split("-")]
         except ValueError:
@@ -149,11 +159,14 @@ def get_downloadable_files(
         if not in_range(dir_y, dir_m, year, month, include_previous):
             continue
         for hint_file in download_dir.glob("*.txt"):
-            for org, prefix in prefixes_dict.items():
+            for tax_id, metadata in organisms_dict.items():
+                prefix = metadata["prefix"]
+                org = metadata["org"]
                 if hint_file.match(f"{prefix}*", case_sensitive=False):
                     mdata, new = DownloadFileMetadata.objects.get_or_create(
                         full_path=f"{hint_file}",
                     )
+                    keep_keys.append(org)
                     if new:
                         qty_lines = buf_count_newlines_gen(f"{hint_file}")
                         mdata.interaction_count = qty_lines - 1
@@ -173,8 +186,10 @@ def get_downloadable_files(
                                          e_type,
                                          gr,
                                          qual)
-    pprint.pprint(downloads)
-    log.info(pprint.pformat(downloads))
+    created_keys = list(downloads.keys())
+    for k in created_keys:
+        if k not in keep_keys:
+            del downloads[k]
     return downloads
 
 
