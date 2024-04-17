@@ -141,36 +141,24 @@ def insert_interactions(hint_output_dir: Path,
                         tissues: Dict) -> None:
     # TODO(mateo): Handle the tissue data once the format is agreed.
     pubmeds = {}
-    in_files = sorted(hint_output_dir.glob("**/*.txt"))
+    in_files = sorted(hint_output_dir.glob("**/*both_all.txt"))
     log.info(f"Loading interactions from {len(in_files)} files")
     c = 0
+    c_evidence = 0
     for in_file in in_files:
         header_read = False
         evidence_buffer = []
         with in_file.open() as f:
-            if "all" not in in_file.name:
-                continue
-            etype = None
-            if "binary" in in_file.stem:
-                etype = Evidence.EvidenceType.BINARY
-            elif "cocomp" in in_file.stem:
-                etype = Evidence.EvidenceType.CO_COMPLEX
-            if in_file.stem.startswith("binary"):
-                continue
-            if in_file.stem.startswith("cocomp"):
-                continue
-            if in_file.stem.startswith("both"):
-                continue
-            if etype is None:
-                log.info(f"Skipping {in_file}, can't find evidence type")
+            if any([in_file.stem.startswith("binary"),
+                    in_file.stem.startswith("cocomp"),
+                    in_file.stem.startswith("both")]):
                 continue
             log.info(f"Processing {in_file} ...")
-            log.info(f"Evidence type {etype} ...")
             for line in f:
                 if not header_read:
                     header_read = True
                     continue
-                up_a, up_b, g_a, g_b, p_m_qs, _ = line.strip().split("\t")
+                up_a, up_b, g_a, g_b, p_m_qs, _, _ = line.strip().split("\t")
                 try:
                     i, _ = Interaction.objects.get_or_create(p1=proteins[up_a],
                                                              p2=proteins[up_b])
@@ -179,20 +167,32 @@ def insert_interactions(hint_output_dir: Path,
                                               REPORT_EVERY_N_DEFAULT) == 0:
                         log.info(f"Processed {c} interactions so far...")
                     for p_m_q in p_m_qs.split("|"):
-                        pmid, method, quality = p_m_q.split(":")
+                        pmid, method, quality, etype = p_m_q.split(":")
                         pmid = pmid
                         method = int(method)
+                        if etype == "binary":
+                            etype = Evidence.EvidenceType.BINARY
+                        elif etype == "co-complex":
+                            etype = Evidence.EvidenceType.CO_COMPLEX
                         if pmid not in pubmeds:
                             pubmeds[pmid], _ = Pubmed.objects.get_or_create(
                                     pubmed_id=pmid, title="update_entry")
-                        evidence_buffer.append(Evidence(interaction=i,
-                                                        pubmed=pubmeds[pmid],
-                                                        method=mi_terms[method],
-                                                        quality=quality,
-                                                        evidence_type=etype))
+                        evidence_buffer.append(
+                                Evidence(interaction=i,
+                                         pubmed=pubmeds[pmid],
+                                         method=mi_terms[method],
+                                         quality=quality,
+                                         evidence_type=etype))
+                        if len(evidence_buffer) >= REPORT_EVERY_N["evidence"]:
+                            Evidence.objects.bulk_create(evidence_buffer)
+                            c_evidence += len(evidence_buffer)
+                            evidence_buffer = []
                 except KeyError:
                     log.info(f"could not load interaction {up_a} - {up_b}")
-            Evidence.objects.bulk_create(evidence_buffer)
+            if evidence_buffer:
+                c_evidence += len(evidence_buffer)
+                Evidence.objects.bulk_create(evidence_buffer)
+                log.info(f"processed {c_evidence} evidence entries")
     log.info(f"Processed all files with a total of {c} interactions.")
 
 
@@ -229,7 +229,7 @@ def get_database_organisms(organisms: Dict,
                 if not header_read:
                     header_read = True
                     continue
-                _, _, _, _, _, taxid = line.strip().split("\t")
+                _, _, _, _, _, taxid, _ = line.strip().split("\t")
                 taxid = int(taxid)
                 if taxid in valid_organisms:
                     continue

@@ -183,9 +183,10 @@ def divide_evidence_by_quality(evidence: str) -> Tuple[List[str]]:
     ht = []
     lc = []
     for e in evidences:
-        if e[-2:] == "HT":
+        p = e.split(":")
+        if p[2] == "HT":
             ht.append(e)
-        elif e[-2:] == "LC":
+        elif p[2] == "LC":
             lc.append(e)
     return lc, ht
 
@@ -216,7 +217,7 @@ def divide_downloadable_files(hint_directory: Path):
                         header = False
                         parts = line.strip().split("\t")
                         for i, p in enumerate(parts):
-                            if p == "pmid:method:quality":
+                            if "pmid:method:quality" in p:
                                 evidence_index = i
                         lc_f.write(line)
                         ht_f.write(line)
