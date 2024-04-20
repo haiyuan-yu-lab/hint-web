@@ -114,6 +114,21 @@ class Interaction(models.Model):
     p2 = models.ForeignKey(Protein,
                            related_name="prot2_set",
                            on_delete=models.CASCADE)
+    high_quality = models.BooleanField()
+
+    def get_hint_format(self):
+        evidence = "|".join(e.get_hint_format()
+                            for e in self.evidence_set.all())
+        taxid = self.p1.organism.tax_id
+        line = (f"{self.p1.uniprot_accession}"
+                f"\t{self.p2.uniprot_accession}"
+                f"\t{self.p1.gene_accession}"
+                f"\t{self.p2.gene_accession}"
+                f"\t{evidence}"
+                f"\t{taxid}"
+                f"\t{self.high_quality}\n"
+                )
+        return line
 
 
 class Evidence(models.Model):
@@ -137,6 +152,16 @@ class Evidence(models.Model):
     tissue = models.ForeignKey(Tissue,
                                on_delete=models.CASCADE,
                                default=Tissue.get_default_pk)
+
+    def get_hint_format(self):
+        evidence_str = {
+            self.EvidenceType.BINARY: "binary",
+            self.EvidenceType.CO_COMPLEX: "co-complex"
+        }
+        return (f"{self.pubmed.pubmed_id}"
+                f":{self.method.mi_id}"
+                f":{self.quality}"
+                f":{evidence_str[self.evidence_type]}")
 
 # ============================================================================
 #                             Versioning and rotation

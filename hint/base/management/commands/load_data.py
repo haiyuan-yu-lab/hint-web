@@ -158,15 +158,18 @@ def insert_interactions(hint_output_dir: Path,
                 if not header_read:
                     header_read = True
                     continue
-                up_a, up_b, g_a, g_b, p_m_qs, _, _ = line.strip().split("\t")
+                (up_a, up_b, g_a, g_b,
+                 p_m_qs_t, _, hq) = line.strip().split("\t")
                 try:
+                    hq = hq == "True"
                     i, _ = Interaction.objects.get_or_create(p1=proteins[up_a],
-                                                             p2=proteins[up_b])
+                                                             p2=proteins[up_b],
+                                                             high_quality=hq)
                     c += 1
                     if c % REPORT_EVERY_N.get("interaction",
                                               REPORT_EVERY_N_DEFAULT) == 0:
                         log.info(f"Processed {c} interactions so far...")
-                    for p_m_q in p_m_qs.split("|"):
+                    for p_m_q in p_m_qs_t.split("|"):
                         pmid, method, quality, etype = p_m_q.split(":")
                         pmid = pmid
                         method = int(method)

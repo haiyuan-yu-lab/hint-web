@@ -32,7 +32,7 @@
                                         text-gray-900
                                         hover:text-indigo-600
                                         ">
-                                <a href="{{ data_dir[e_type][0] }}">
+                                <a href='{{ url("donwload-raw", kwargs=data_dir[e_type][0]) }}'>
                                     {{ data_dir[e_type][2] }}
                                 </a>
                             </div>

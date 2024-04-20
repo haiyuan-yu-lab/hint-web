@@ -1,10 +1,8 @@
 from pathlib import Path
 from typing import Dict, Tuple, List
-from django.contrib.staticfiles.storage import staticfiles_storage
 from base.models import Organism, Protein, DownloadFileMetadata
 from django.db.models import Case, When, Value
 import logging
-import pprint
 
 
 log = logging.getLogger("main")
@@ -121,7 +119,6 @@ def get_downloadable_files(
         }
     """
     raw_files = Path(__file__).resolve().parent / "static" / "raw_hint_files"
-    static_prefix = "raw_hint_files"
     orgs = (Protein.objects
             .order_by().values_list("organism", flat=True).distinct())
     order = Case(
@@ -173,15 +170,16 @@ def get_downloadable_files(
                         mdata.save()
                     for suffix, (e_type, gr, qual) in valid_suffixes.items():
                         if hint_file.match(f"*{suffix}"):
-                            hintdir = f"{static_prefix}/{dir_y}-{dir_m:02}"
-                            url = staticfiles_storage.url(
-                                f"{hintdir}/{hint_file.name}"
-                            )
+                            hint_version = f"{dir_y}-{dir_m:02}"
+                            url_kwargs = {
+                                "hint_version": hint_version,
+                                "filename": hint_file.name
+                            }
                             add_metadata(downloads,
                                          org,
                                          dir_y,
                                          dir_m,
-                                         url,
+                                         url_kwargs,
                                          mdata,
                                          e_type,
                                          gr,

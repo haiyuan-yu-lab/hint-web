@@ -1,0 +1,128 @@
+{% macro interaction_row(it, evidence_th, selection_data) %}
+    <tr>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+            {% if it["p1__gene_accession"] %}
+                <a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene={{ it["p1__gene_accession"] }}"
+                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+                   target="_blank">
+                    {{ it["p1__gene_accession"] }}
+                <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                </a>
+                <br>
+            {% endif %}
+            <a href='https://www.uniprot.org/uniprotkb/{{ it["p1__uniprot_accession"] }}/entry'
+               class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+               target="_blank">
+                {{ it["p1__uniprot_accession"] }}
+                <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+            </a>
+        </td>
+        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+            {% if it["p2__gene_accession"] %}
+                <a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene={{ it["p2__gene_accession"] }}"
+                   class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+                   target="_blank">
+                    {{ it["p2__gene_accession"] }}
+                <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                </a>
+                <br>
+            {% endif %}
+            <a href="https://www.uniprot.org/uniprotkb/{{ it["p2__uniprot_accession"] }}/entry"
+               class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
+               target="_blank">
+                {{ it["p2__uniprot_accession"] }}
+                <svg class="pointer-events-none relative bottom-0.5 inline h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+            </a>
+        </td>
+        <td id='evidence-{{ it["id"] }}'
+            class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+            <button type="button"
+                    class="rounded-md
+                        bg-indigo-600
+                        px-3 py-2
+                        text-sm font-semibold
+                        text-white shadow-sm
+                        hover:bg-indigo-500
+                        focus-visible:outline
+                        focus-visible:outline-2
+                        focus-visible:outline-offset-2
+                        focus-visible:outline-indigo-600"
+                    hx-get='{{ url("interaction-evidence", kwargs={"interaction_id": it["id"], "ev_type": selection_data["evidence_type"], "ev_quality": selection_data["quality"]}) }}'
+                    hx-target='#evidence-{{ it["id"] }}'
+                    {% if it["num_evidence"] <= evidence_th %}
+                    hx-trigger="load"
+                    {% endif %}
+                    >
+                Load evidence {{ it["num_evidence"] }}
+            </button>
+        </td>
+    </tr>
+{% endmacro %}
+
+{% macro interaction_load_more_row(name, selection_data, offset, count) %}
+<tr id="load-more-{{ name }}">
+    <td colspan="3" scope="colgroup">
+        {% for p in selection_data["selected_proteins"] %}
+        <input type="hidden"
+               class="{{ name }}-form"
+               name="selected_proteins[]"
+               value="{{ p }}">
+        {% endfor %}
+        <input type="hidden"
+               class="{{ name }}-form"
+               name="evidence-type"
+               value="{{ selection_data["evidence_type"] }}">
+        <input type="hidden"
+               name="quality"
+               class="{{ name }}-form"
+               value="{{ selection_data["quality"] }}">
+        <input type="hidden"
+               class="{{ name }}-form"
+               name="offset"
+               value="{{ offset }}">
+        <input type="hidden"
+               class="{{ name }}-form"
+               name="count"
+               value="{{ count }}">
+        <input type="hidden"
+               class="{{ name }}-form"
+               name="name"
+               value="{{ name }}">
+        <button
+            type="button"
+            hx-post="/interactions"
+            hx-target="#load-more-{{ name }}"
+            hx-include=".{{ name }}-form"
+            hx-swap="outerHTML"
+            class="rounded-md
+                bg-indigo-600
+                px-3 py-2
+                w-full
+                text-sm font-semibold
+                text-white shadow-sm
+                hover:bg-indigo-500
+                focus-visible:outline
+                focus-visible:outline-2
+                focus-visible:outline-offset-2
+                focus-visible:outline-indigo-600">
+            <span>Load more interactions</span>
+        </button>
+    </td>
+</tr>
+{% endmacro %}
+{% if interactions is defined %}
+    {% for it in interactions %}
+        {{ interaction_row(it, evidence_th, selection_data) }}
+    {% endfor %}
+    {% if load_more %}
+        {{ interaction_load_more_row(name, selection_data, offset, count) }}
+    {% endif %}
+{% endif %}
