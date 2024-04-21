@@ -115,6 +115,7 @@ class Interaction(models.Model):
                            related_name="prot2_set",
                            on_delete=models.CASCADE)
     high_quality = models.BooleanField()
+    # these flags are useful when displaying the network
     has_cocomplex = models.BooleanField()
     has_binary = models.BooleanField()
 
