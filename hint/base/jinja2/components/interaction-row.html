@@ -1,6 +1,20 @@
-{% macro interaction_row(it, evidence_th, selection_data) %}
+{% macro interaction_row(it, evidence_th, selection_data, color_reference) %}
     <tr>
-        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+        <td class="whitespace-nowrap px-3 py-4 text-sm align-top text-gray-500">
+            <svg class="w-16 relative left-3/4 top-5"
+                 {% if it["has_binary"] and it["has_cocomplex"] %}
+                 style='color: {{ color_reference["both"] }}'
+                 {% elif it["has_binary"] %}
+                 style='color: {{ color_reference["binary"] }}'
+                 {% else %}
+                 style='color: {{ color_reference["co-complex"] }}'
+                 {% endif %}
+                 viewBox="0 0 325 117" version="1.1" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="currentColor">
+                <circle cx="58.005" cy="58.005" r="20.508"/>
+                <circle cx="266.889" cy="58.005" r="20.508"/>
+                <path d="M58.005,58.005L266.889,58.005" style="fill:none;stroke-width:21px;"/>
+            </svg>
+            <div class="-m-3">
             {% if it["p1__gene_accession"] %}
                 <a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene={{ it["p1__gene_accession"] }}"
                    class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
@@ -20,8 +34,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                 </svg>
             </a>
+            </div>
         </td>
-        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+        <td class="whitespace-nowrap px-3 py-4 text-sm align-top text-gray-500">
+            <div class="py-3 pl-6">
             {% if it["p2__gene_accession"] %}
                 <a href="https://www.genecards.org/cgi-bin/carddisp.pl?gene={{ it["p2__gene_accession"] }}"
                    class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-400"
@@ -41,6 +57,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                 </svg>
             </a>
+            </div>
         </td>
         <td id='evidence-{{ it["id"] }}'
             class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -120,7 +137,7 @@
 {% endmacro %}
 {% if interactions is defined %}
     {% for it in interactions %}
-        {{ interaction_row(it, evidence_th, selection_data) }}
+        {{ interaction_row(it, evidence_th, selection_data, color_reference) }}
     {% endfor %}
     {% if load_more %}
         {{ interaction_load_more_row(name, selection_data, offset, count) }}

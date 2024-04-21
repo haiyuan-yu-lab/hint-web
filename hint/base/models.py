@@ -115,6 +115,8 @@ class Interaction(models.Model):
                            related_name="prot2_set",
                            on_delete=models.CASCADE)
     high_quality = models.BooleanField()
+    has_cocomplex = models.BooleanField()
+    has_binary = models.BooleanField()
 
     def get_hint_format(self):
         evidence = "|".join(e.get_hint_format()

@@ -83,7 +83,7 @@
     </thead>
     <tbody class="divide-y divide-gray-200 bg-white">
         {% for it in interactions %}
-            {{ interaction_row.interaction_row(it, evidence_th, selection_data) }}
+            {{ interaction_row.interaction_row(it, evidence_th, selection_data, color_reference) }}
         {% endfor %}
         {% if load_more %}
             {{ interaction_row.interaction_load_more_row(name, selection_data, offset, count) }}
@@ -117,6 +117,40 @@
             Interactome explorer
             {{ network_download_button(selection_data, "all", "Download all interactions") }}
         </h1>
+        <div>
+            <ul>
+                <li>
+                    <svg class="w-16 inline"
+                         style='color: {{ color_reference["binary"] }}'
+                         viewBox="0 0 325 117" version="1.1" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="currentColor">
+                        <circle cx="58.005" cy="58.005" r="20.508"/>
+                        <circle cx="266.889" cy="58.005" r="20.508"/>
+                        <path d="M58.005,58.005L266.889,58.005" style="fill:none;stroke-width:21px;"/>
+                    </svg>
+                    Indicates a binary interaction
+                </li>
+                <li>
+                    <svg class="w-16 inline"
+                         style='color: {{ color_reference["co-complex"] }}'
+                         viewBox="0 0 325 117" version="1.1" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="currentColor">
+                        <circle cx="58.005" cy="58.005" r="20.508"/>
+                        <circle cx="266.889" cy="58.005" r="20.508"/>
+                        <path d="M58.005,58.005L266.889,58.005" style="fill:none;stroke-width:21px;"/>
+                    </svg>
+                    Indicates a co-complex interaction
+                </li>
+                <li>
+                    <svg class="w-16 inline"
+                         style='color: {{ color_reference["both"] }}'
+                         viewBox="0 0 325 117" version="1.1" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" fill="currentColor">
+                        <circle cx="58.005" cy="58.005" r="20.508"/>
+                        <circle cx="266.889" cy="58.005" r="20.508"/>
+                        <path d="M58.005,58.005L266.889,58.005" style="fill:none;stroke-width:21px;"/>
+                    </svg>
+                    Indicates both binary and co-complex interaction
+                </li>
+            </ul>
+        </div>
         <h2 class="mt-4 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl pb-4" >
             {{ main_interactions_count }} Interactions involving selected proteins
             {{ network_download_button(selection_data, "main", "Download these interactions") }}

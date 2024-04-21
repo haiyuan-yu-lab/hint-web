@@ -12,6 +12,11 @@ log = logging.getLogger("main")
 NETWORK_NODE_LIMIT = 50
 PAGINATION_STEP = 50
 EVIDENCE_LOAD_TH = 20
+COLORS = {"both": "#9933ff",
+          "binary": "#3366ff",
+          "co-complex": "#ff1a1a",
+          "main": "#1b6abf",
+          "neighbor": "#bf651b"}
 
 
 def home(request):
@@ -104,21 +109,27 @@ def build_cytoscape_dict(main_nodes, neighbors,
             return i[f"p{n}__gene_accession"]
         return i[f"p{n}__uniprot_accession"]
 
+    def edge_color(i):
+        if i["has_binary"] and i["has_cocomplex"]:
+            return COLORS["both"]
+        if i["has_binary"]:
+            return COLORS["binary"]
+        return COLORS["co-complex"]
+
     if len(main_nodes) + len(neighbors) > NETWORK_NODE_LIMIT:
         return {"message": "too-many-nodes"}
-    colors = {"main": "#3175b0", "neighbor": "#b06831"}
     encoded_nodes = [
-        {"data": {"id": p.display_name(network=True), "c": colors["main"]}}
+        {"data": {"id": p.display_name(network=True), "c": COLORS["main"]}}
         for p in main_nodes]
     encoded_nodes.extend(
-        {"data": {"id": p.display_name(network=True), "c": colors["neighbor"]}}
+        {"data": {"id": p.display_name(network=True), "c": COLORS["neighbor"]}}
         for p in neighbors)
     edges = [{
         "data": {
             "id": i["id"],
             "source": display_name(i, 1),
             "target": display_name(i, 2),
-            "c": colors["neighbor"]
+            "c": edge_color(i)
         }
     } for i in main_interactions]
 
@@ -127,13 +138,13 @@ def build_cytoscape_dict(main_nodes, neighbors,
             "id": i["id"],
             "source": display_name(i, 1),
             "target": display_name(i, 2),
-            "c": colors["neighbor"]
+            "c": edge_color(i)
         }
     } for i in neighbors_interactions)
 
     return {
         "nodes": encoded_nodes,
-        "edges": edges
+        "edges": edges,
     }
 
 
@@ -143,6 +154,8 @@ INTERACTION_COLUMS = [
     "p1__uniprot_accession",
     "p2__gene_accession",
     "p2__uniprot_accession",
+    "has_cocomplex",
+    "has_binary",
     "num_evidence",
 ]
 
@@ -249,6 +262,7 @@ def network_viewer(request):
                     neighbors_interactions)
             context["neighbors_interactions"] = neighbors_interactions
             context["neighbors_interactions_count"] = neighbors_ints_count
+            context["color_reference"] = COLORS
             log.debug(f"{neighbors_ints_count=}")
             log.debug(f"{neighbors_interactions=}")
 
@@ -288,6 +302,7 @@ def interaction_load_more(request):
             context["count"] = count
             context["offset"] = offset + len(interactions)
             context["interactions"] = interactions
+            context["color_referece"] = COLORS
             log.debug(context)
     return render(request, "components/interaction-row.html", context)
 
