@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from . import views
 
@@ -20,3 +21,5 @@ urlpatterns = [
          name="network-download"),
     path("search-proteins", views.search_proteins, name="search-proteins"),
 ]
+
+urlpatterns += staticfiles_urlpatterns()
