@@ -30,7 +30,7 @@ DEBUG = int(os.environ.get("HINT_DEBUG", default=1)) == 1
 
 ALLOWED_HOSTS = os.environ.get("HINT_ALLOWED_HOSTS",
                                default="0.0.0.0 localhost 127.0.0.1"
-                               ).split(" ")
+                               ).split()
 
 CSRF_TRUSTED_ORIGINS = os.environ.get("HINT_CSRF_TRUSTED_ORIGINS",
                                       default="http://localhost"
