@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile.prod
     command: gunicorn hint.wsgi:application --bind 0.0.0.0:80 -w 4
     volumes:
-      - ./hint/base/static:/home/app/hint/staticfiles
       - ./hint/base:/home/app/hint/base
       - ./hint/hint:/home/app/hint/hint
       - ./hint-data:/home/app/data
