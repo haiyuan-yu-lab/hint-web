@@ -10,7 +10,7 @@ services:
       - ./hint/base/static:/home/app/hint/staticfiles
       - ./hint/base:/home/app/hint/base
       - ./hint/hint:/home/app/hint/hint
-      - ./data:/home/app/data
+      - ./hint-data:/home/app/data
     # uncomment these to access the app directly for test purposes, 
     # but expect everything to be broken.
     ports:
