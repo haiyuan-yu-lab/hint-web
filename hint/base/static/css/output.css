@@ -833,10 +833,6 @@ select {
   left: 0px;
 }
 
-.left-3\/4 {
-  left: 75%;
-}
-
 .left-4 {
   left: 1rem;
 }
@@ -853,10 +849,6 @@ select {
   top: 0.875rem;
 }
 
-.top-5 {
-  top: 1.25rem;
-}
-
 .top-\[100vh\] {
   top: 100vh;
 }
@@ -867,10 +859,6 @@ select {
 
 .float-end {
   float: inline-end;
-}
-
-.-m-3 {
-  margin: -0.75rem;
 }
 
 .-mx-4 {
@@ -1578,6 +1566,11 @@ select {
   padding-bottom: 1.5rem;
 }
 
+.py-20 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
 .pb-10 {
   padding-bottom: 2.5rem;
 }
@@ -1596,10 +1589,6 @@ select {
 
 .pl-4 {
   padding-left: 1rem;
-}
-
-.pl-6 {
-  padding-left: 1.5rem;
 }
 
 .pr-3 {
@@ -2257,8 +2246,16 @@ select {
 }
 
 @media (min-width: 1024px) {
-  .lg\:col-span-5 {
-    grid-column: span 5 / span 5;
+  .lg\:col-span-1 {
+    grid-column: span 1 / span 1;
+  }
+
+  .lg\:col-span-8 {
+    grid-column: span 8 / span 8;
+  }
+
+  .lg\:col-span-2 {
+    grid-column: span 2 / span 2;
   }
 
   .lg\:col-span-7 {
@@ -2291,6 +2288,14 @@ select {
     max-width: none;
   }
 
+  .lg\:grid-cols-11 {
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+  }
+
+  .lg\:grid-cols-10 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+
   .lg\:grid-cols-12 {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
@@ -2307,5 +2312,10 @@ select {
   .lg\:py-40 {
     padding-top: 10rem;
     padding-bottom: 10rem;
+  }
+
+  .lg\:py-20 {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
   }
 }
