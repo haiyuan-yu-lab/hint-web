@@ -177,8 +177,14 @@ def get_interactions_qs(protein_selection, evidence_type, quality):
                 evidence__quality=Evidence.Quality.LITERATURE_CURATED)
         return filters
 
-    proteins = Protein.objects.filter(
-        uniprot_accession__in=protein_selection)
+    proteins = Protein.objects
+    q = None
+    for p in protein_selection:
+        if q is None:
+            q = Q(uniprot_accession__startswith=p)
+        else:
+            q |= Q(uniprot_accession__startswith=p)
+    proteins = Protein.objects.filter(q)
     filters = make_filters(proteins)
     interactions_qs = (
         Interaction.objects.filter(filters)
