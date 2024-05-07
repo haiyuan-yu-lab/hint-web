@@ -71,7 +71,7 @@
                                     <div id="protein-search-selection">
                                         <legend class="block text-sm font-medium leading-6 text-gray-900 px-2">Selected Proteins</legend>
                                         <ul>
-                                            <template x-for="protein in Array.from(selection)">
+                                            <template x-for="protein in Array.from(selection.values() )">
                                                 <li class="items-center
                                                            block
                                                            rounded-md 
@@ -109,17 +109,22 @@
                                                 options: [],
                                                 c_index: -1,
                                                 selected: null,
-                                                selection: new Set(),
+                                                selection: new Map(),
                                                 open: false,
                                                 init() {
                                                     this.$watch("selected", () => {
                                                         if (this.selected != null) { 
                                                             let protein_accession = this.options[this.selected].getAttribute("value");
                                                             let display_text = this.options[this.selected].textContent;
-                                                            this.selection.add({
-                                                                "accession": protein_accession,
-                                                                "display": display_text,
-                                                            });
+                                                            if (!this.selection.has(protein_accession)){
+                                                                this.selection.set(
+                                                                    protein_accession,
+                                                                    {
+                                                                        "accession": protein_accession,
+                                                                        "display": display_text,
+                                                                    }
+                                                                );
+                                                            }
                                                             this.selected = null;
                                                         }
                                                     });
@@ -135,12 +140,13 @@
                                                 },
                                                 unselect: function (accession) {
                                                     console.log("unselect", accession);
-                                                    this.selection.forEach((protein) => {
+                                                    this.selection.delete(accession);
+                                                    /*this.selection.forEach((protein) => {
                                                         console.log("protein", protein);
                                                         if (protein.accession == accession){
                                                             this.selection.delete(protein);
                                                         }
-                                                    });
+                                                    });*/
                                                 },
                                                 selectCurrent: function () {
                                                     this.selected = this.c_index;
