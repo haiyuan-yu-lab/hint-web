@@ -113,12 +113,15 @@
                                                 open: false,
                                                 init() {
                                                     this.$watch("selected", () => {
-                                                        let protein_accession = this.options[this.selected].getAttribute("value");
-                                                        let display_text = this.options[this.selected].textContent;
-                                                        this.selection.add({
-                                                            "accession": protein_accession,
-                                                            "display": display_text,
-                                                        });
+                                                        if (this.selected != null) { 
+                                                            let protein_accession = this.options[this.selected].getAttribute("value");
+                                                            let display_text = this.options[this.selected].textContent;
+                                                            this.selection.add({
+                                                                "accession": protein_accession,
+                                                                "display": display_text,
+                                                            });
+                                                            this.selected = null;
+                                                        }
                                                     });
                                                 },
                                                 loadItems: function (e) {
