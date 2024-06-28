@@ -114,10 +114,11 @@ class Interaction(models.Model):
     p2 = models.ForeignKey(Protein,
                            related_name="prot2_set",
                            on_delete=models.CASCADE)
-    high_quality = models.BooleanField()
     # these flags are useful when displaying the network
-    has_cocomplex = models.BooleanField()
-    has_binary = models.BooleanField()
+    cocomplex = models.BooleanField(default=False)
+    cocomplex_hq = models.BooleanField(default=False)
+    binary = models.BooleanField(default=False)
+    binary_hq = models.BooleanField(default=False)
 
     def get_hint_format(self):
         evidence = "|".join(e.get_hint_format()
@@ -129,13 +130,15 @@ class Interaction(models.Model):
                 f"\t{self.p2.gene_accession}"
                 f"\t{evidence}"
                 f"\t{taxid}"
-                f"\t{self.high_quality}\n"
+                f"\t{self.binary_hq}"
+                f"\t{self.cocomplex_hq}"
+                "\n"
                 )
         return line
 
 
 class Evidence(models.Model):
-    class Quality(models.TextChoices):
+    class SourceType(models.TextChoices):
         HIGH_THROUGHPUT = "HT", _("High Throughput")
         LITERATURE_CURATED = "LC", _("Literature Curated")
 
@@ -150,7 +153,7 @@ class Evidence(models.Model):
     # TODO(mateo): confirm that this field is actually PSI-MI ontology.
     method = models.ForeignKey(MITerm,
                                on_delete=models.CASCADE)
-    quality = models.CharField(max_length=2, choices=Quality)
+    source_type = models.CharField(max_length=2, choices=SourceType)
     evidence_type = models.IntegerField(choices=EvidenceType)
     tissue = models.ForeignKey(Tissue,
                                on_delete=models.CASCADE,
@@ -163,7 +166,7 @@ class Evidence(models.Model):
         }
         return (f"{self.pubmed.pubmed_id}"
                 f":{self.method.mi_id}"
-                f":{self.quality}"
+                f":{self.source_type}"
                 f":{evidence_str[self.evidence_type]}")
 
 # ============================================================================

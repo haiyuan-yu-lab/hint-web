@@ -13,7 +13,7 @@ urlpatterns = [
     path("faq", views.faq, name="faq"),
     path("network-viewer", views.network_viewer, name="network-viewer"),
     path("interactions", views.interaction_load_more, name="interactions"),
-    path("interaction-evidence/<int:interaction_id>/<ev_type>/<ev_quality>",
+    path("interaction-evidence/<int:interaction_id>",
          views.interaction_evidence,
          name="interaction-evidence"),
     path("network-download",

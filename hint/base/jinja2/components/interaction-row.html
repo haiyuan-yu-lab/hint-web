@@ -23,9 +23,9 @@
         </td>
         <td class="whitespace-nowrap px-3 py-4 text-sm align-top text-gray-500">
             <svg class="w-16"
-                 {% if it["has_binary"] and it["has_cocomplex"] %}
+                 {% if it["binary"] and it["cocomplex"] %}
                  style='color: {{ color_reference["both"] }}'
-                 {% elif it["has_binary"] %}
+                 {% elif it["binary"] %}
                  style='color: {{ color_reference["binary"] }}'
                  {% else %}
                  style='color: {{ color_reference["co-complex"] }}'
@@ -70,7 +70,7 @@
                         focus-visible:outline-2
                         focus-visible:outline-offset-2
                         focus-visible:outline-indigo-600"
-                    hx-get='{{ url("interaction-evidence", kwargs={"interaction_id": it["id"], "ev_type": selection_data["evidence_type"], "ev_quality": selection_data["quality"]}) }}'
+                    hx-get='{{ url("interaction-evidence", kwargs={"interaction_id": it["id"]}) }}'
                     hx-target='#evidence-{{ it["id"] }}'
                     {% if it["num_evidence"] <= evidence_th %}
                     hx-trigger="load"

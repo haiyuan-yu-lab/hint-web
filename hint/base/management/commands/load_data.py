@@ -34,7 +34,6 @@ def create_downloadable_files(year: int,
             continue
         dest_file = raw_files / infile.name
         shutil.copy2(infile, dest_file)
-    hint_downloads.divide_downloadable_files(raw_files)
 
 
 def insert_mi_ontology(mi_ontology: Path) -> Dict:
@@ -149,9 +148,9 @@ def insert_interactions(hint_output_dir: Path,
         header_read = False
         evidence_buffer = []
         with in_file.open() as f:
-            if any([in_file.stem.startswith("binary"),
-                    in_file.stem.startswith("cocomp"),
-                    in_file.stem.startswith("both")]):
+            if any(["binary" in in_file.stem,
+                    "cocomp" in in_file.stem,
+                    "hq" in in_file.stem]):
                 continue
             log.info(f"Processing {in_file} ...")
             for line in f:
@@ -159,12 +158,13 @@ def insert_interactions(hint_output_dir: Path,
                     header_read = True
                     continue
                 (up_a, up_b, g_a, g_b,
-                 p_m_qs_t, _, hq) = line.strip().split("\t")
+                 p_m_qs_t, _, bin_hq, cc_hq, _) = line.strip().split("\t")
                 try:
-                    hq = hq == "True"
+                    bin_hq = bin_hq == "True"
+                    cc_hq = cc_hq == "True"
                     i, _ = Interaction.objects.get_or_create(
-                        p1=proteins[up_a], p2=proteins[up_b], high_quality=hq,
-                        has_binary=False, has_cocomplex=False)
+                        p1=proteins[up_a], p2=proteins[up_b],
+                        binary_hq=bin_hq, cocomplex_hq=cc_hq)
                     c += 1
                     if c % REPORT_EVERY_N.get("interaction",
                                               REPORT_EVERY_N_DEFAULT) == 0:
@@ -172,7 +172,7 @@ def insert_interactions(hint_output_dir: Path,
                     has_binary = False
                     has_cocomplex = False
                     for p_m_q in p_m_qs_t.split("|"):
-                        pmid, method, quality, etype = p_m_q.split(":")
+                        pmid, method, source_type, etype = p_m_q.split(":")
                         pmid = pmid
                         method = int(method)
                         if etype == "binary":
@@ -183,19 +183,19 @@ def insert_interactions(hint_output_dir: Path,
                             has_cocomplex = True
                         if pmid not in pubmeds:
                             pubmeds[pmid], _ = Pubmed.objects.get_or_create(
-                                    pubmed_id=pmid, title="update_entry")
+                                pubmed_id=pmid, title="update_entry")
                         evidence_buffer.append(
-                                Evidence(interaction=i,
-                                         pubmed=pubmeds[pmid],
-                                         method=mi_terms[method],
-                                         quality=quality,
-                                         evidence_type=etype))
+                            Evidence(interaction=i,
+                                     pubmed=pubmeds[pmid],
+                                     method=mi_terms[method],
+                                     source_type=source_type,
+                                     evidence_type=etype))
                         if len(evidence_buffer) >= REPORT_EVERY_N["evidence"]:
                             Evidence.objects.bulk_create(evidence_buffer)
                             c_evidence += len(evidence_buffer)
                             evidence_buffer = []
-                    i.has_binary = has_binary
-                    i.has_cocomplex = has_cocomplex
+                    i.binary = has_binary
+                    i.cocomplex = has_cocomplex
                     i.save()
                 except KeyError:
                     log.info(f"could not load interaction {up_a} - {up_b}")
@@ -213,33 +213,25 @@ def get_database_organisms(organisms: Dict,
     database, this will restrict the inserted proteins only to the organisms
     that will be displayed in the GUI
     """
-    in_files = sorted(hint_output_dir.glob("**/*.txt"))
+    in_files = sorted(hint_output_dir.glob("**/*both_all.txt"))
     valid_organisms = {}
     for in_file in in_files:
         header_read = False
         with in_file.open() as f:
             if "all" not in in_file.name:
                 continue
-            etype = None
-            if "binary" in in_file.stem:
-                etype = Evidence.EvidenceType.BINARY
-            elif "cocomp" in in_file.stem:
-                etype = Evidence.EvidenceType.CO_COMPLEX
             if in_file.stem.startswith("binary"):
                 continue
             if in_file.stem.startswith("cocomp"):
                 continue
             if in_file.stem.startswith("both"):
                 continue
-            if etype is None:
-                log.info(f"Skipping {in_file}, can't find evidence type")
-                continue
             log.info(f"Processing {in_file} ...")
             for line in f:
                 if not header_read:
                     header_read = True
                     continue
-                _, _, _, _, _, taxid, _ = line.strip().split("\t")
+                _, _, _, _, _, taxid, _, _, _ = line.strip().split("\t")
                 taxid = int(taxid)
                 if taxid in valid_organisms:
                     continue

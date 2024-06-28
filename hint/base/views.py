@@ -110,9 +110,9 @@ def build_cytoscape_dict(main_nodes, neighbors,
         return i[f"p{n}__uniprot_accession"]
 
     def edge_color(i):
-        if i["has_binary"] and i["has_cocomplex"]:
+        if i["binary"] and i["cocomplex"]:
             return COLORS["both"]
-        if i["has_binary"]:
+        if i["binary"]:
             return COLORS["binary"]
         return COLORS["co-complex"]
 
@@ -154,8 +154,10 @@ INTERACTION_COLUMS = [
     "p1__uniprot_accession",
     "p2__gene_accession",
     "p2__uniprot_accession",
-    "has_cocomplex",
-    "has_binary",
+    "cocomplex",
+    "cocomplex_hq",
+    "binary",
+    "binary_hq",
     "num_evidence",
 ]
 
@@ -167,14 +169,16 @@ def get_interactions_qs(protein_selection, evidence_type, quality):
         else:
             filters = (Q(p1__in=proteins) & Q(p2__in=proteins))
         if evidence_type == "binary":
-            filters &= Q(
-                evidence__evidence_type=Evidence.EvidenceType.BINARY)
+            filters &= Q(binary=True)
+            if quality == "high-quality":
+                filters &= Q(binary_hq=True)
         elif evidence_type == "cocomp":
-            filters &= Q(
-                evidence__evidence_type=Evidence.EvidenceType.CO_COMPLEX)
-        if quality == "high-quality":
-            filters &= Q(
-                evidence__quality=Evidence.Quality.LITERATURE_CURATED)
+            filters &= Q(cocomplex=True)
+            if quality == "high-quality":
+                filters &= Q(cocomplex_hq=True)
+        elif evidence_type == "both":
+            if quality == "high-quality":
+                filters &= (Q(binary_hq=True) | Q(cocomplex_hq=True))
         return filters
 
     proteins = Protein.objects
@@ -229,8 +233,6 @@ def network_viewer(request):
             log.info(f"protein selection has {len(protein_selection)} items")
             log.info(f"etype: {evidence_type}")
             log.info(f"quality: {quality}")
-
-            log.debug("proteins selected")
 
             proteins, neighbors, interactions_qs, neighbors_ints_qs =\
                 get_interactions_qs(protein_selection, evidence_type, quality)
@@ -308,21 +310,15 @@ def interaction_load_more(request):
             context["count"] = count
             context["offset"] = offset + len(interactions)
             context["interactions"] = interactions
-            context["color_referece"] = COLORS
+            context["color_reference"] = COLORS
             log.debug(context)
     return render(request, "components/interaction-row.html", context)
 
 
-def interaction_evidence(request, interaction_id, ev_type, ev_quality):
+def interaction_evidence(request, interaction_id):
     context = {}
     interaction = get_object_or_404(Interaction, pk=interaction_id)
     filters = Q(interaction=interaction)
-    if ev_type == "binary":
-        filters &= Q(evidence_type=Evidence.EvidenceType.BINARY)
-    elif ev_type == "cocomp":
-        filters &= Q(evidence_type=Evidence.EvidenceType.CO_COMPLEX)
-    if ev_quality == "high-quality":
-        filters &= Q(quality=Evidence.Quality.LITERATURE_CURATED)
     context["evidence_list"] = Evidence.objects.filter(filters)
     return render(request, "components/evidence-detail.html", context)
 
