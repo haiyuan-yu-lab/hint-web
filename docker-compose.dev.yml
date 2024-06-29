@@ -5,7 +5,8 @@ services:
     build: 
       context: ./hint
       dockerfile: Dockerfile.prod
-    command: gunicorn hint.wsgi:application --bind 0.0.0.0:80 -w 4
+        #command: gunicorn hint.wsgi:application --bind 0.0.0.0:80 -w 4
+    command: python manage.py runserver 0.0.0.0:80
     volumes:
       - ./hint/base/static:/home/app/hint/staticfiles
       - ./hint/base:/home/app/hint/base

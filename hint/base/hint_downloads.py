@@ -38,13 +38,15 @@ def add_metadata(downloads: Dict,
                  metadata: DownloadFileMetadata,
                  evidence_type: str,
                  group: str,
-                 quality: str) -> None:
+                 quality: str,
+                 display_label: str | None) -> None:
     quality_map = {
         "all": "",
         "literature curated": "Literature curated",
         "high throughput": "High-throughput"
     }
-    display_label = f"{quality_map[quality]} {evidence_type}"
+    if display_label is None:
+        display_label = f"{quality_map[quality]} {evidence_type}"
 
     if org not in downloads:
         downloads[org] = {}
@@ -126,11 +128,21 @@ def get_downloadable_files(
           for i, tid in enumerate(Organism.CUSTOM_ORGANISM_ORDER)]
     )
     all_organisms = Organism.objects.filter(pk__in=orgs).order_by(order)
-    organisms_dict = {o.tax_id: {
-        "org": o,
-        "prefix": o.get_filename_prefix(),
-    }
+    organisms_dict = {
+        o.tax_id: {
+            "org": o,
+            "prefix": o.get_filename_prefix(),
+        }
         for o in all_organisms}
+    organisms_dict["all_taxa"] = {
+        "org": Organism(
+            pk=-1,
+            tax_id=0,
+            name="all",
+            scientific_name="Interactions for all species"
+        ),
+        "prefix": "both_all.txt",
+    }
     # file name suffix -> (evidence type, group, quality)
     valid_suffixes = {
         "binary_all.txt": ("binary", "all qualities", "all"),
@@ -159,6 +171,8 @@ def get_downloadable_files(
             for tax_id, metadata in organisms_dict.items():
                 prefix = metadata["prefix"]
                 org = metadata["org"]
+                display_label = ("All HINT interactions" if org.name == "all"
+                                 else None)
                 if hint_file.match(f"{prefix}*", case_sensitive=False):
                     mdata, new = DownloadFileMetadata.objects.get_or_create(
                         full_path=f"{hint_file}",
@@ -183,7 +197,8 @@ def get_downloadable_files(
                                          mdata,
                                          e_type,
                                          gr,
-                                         qual)
+                                         qual,
+                                         display_label)
     created_keys = list(downloads.keys())
     for k in created_keys:
         if k not in keep_keys:

@@ -6,6 +6,7 @@ from base.hint_downloads import get_downloadable_files
 from typing import Dict
 from pathlib import Path
 import logging
+from pprint import pformat
 
 
 log = logging.getLogger("main")
@@ -44,6 +45,7 @@ def download(request):
     context["hint_version"] = hint_version
     context["raw_files"] = get_downloadable_files(hint_version.year,
                                                   hint_version.month)
+    log.debug(pformat(context))
     return render(request, "download.html", context)
 
 

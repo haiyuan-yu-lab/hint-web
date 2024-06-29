@@ -15,9 +15,9 @@
 {% endmacro %}
 
 
-{% macro table_row(data_dir, group, quality) %}
+{% macro table_row(data_dir, group, quality, etypes = ["binary", "co-complex"]) %}
 <tr>
-    {% for e_type in ["binary", "co-complex"] %}
+    {% for e_type in etypes %}
         {% if e_type in data_dir %}
             <td class="relative py-5 px-6">
                 <div class="flex gap-x-6">
@@ -66,7 +66,11 @@
             :aria-expanded="expanded"
             aria-controls="downloads-content-{{ accordion_index }}"
         >
-        <span>{{ organism.scientific_name }}</span>
+        <span
+            {% if organism.name != "all" %}
+                class="italic"
+            {% endif %}
+            >{{ organism.scientific_name }}</span>
             <svg class="fill-indigo-500 shrink-0 ml-8" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
                 <rect y="7" width="16" height="2" rx="1" class="transform origin-center transition duration-200 ease-out" :class="{'!rotate-180': expanded}" />
                 <rect y="7" width="16" height="2" rx="1" class="transform origin-center rotate-90 transition duration-200 ease-out" :class="{'!rotate-180': expanded}" />
@@ -91,51 +95,59 @@
                             </tr>
                         </thead>
                         {% for (year, month), date_dir in organism_data.items() %}
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                {% if display_version %}
-                                <tr class="border-t border-gray-200">
-                                    <th colspan="2" scope="colgroup" class="bg-gray-50 py-2 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3">{{ year }}-{{ month }}</th>
-                                </tr>
-                                {% endif %}
-                                {% for quality, group in [("all", "high quality"), ("high throughput", "high quality"), ("literature curated", "high quality")] %}
-                                    {% if (group in date_dir) and (quality in date_dir[group]) %}
-                                        {{ table_row(date_dir[group][quality], group, quality) }}
-                                    {% endif %}
+                            {% if organism.name == "all" %}
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for (year, month), date_dir in organism_data.items() %}
+                                    {{ table_row(date_dir["all qualities"]["all"], "all qualities", "all", ["both"] ) }}
                                 {% endfor %}
-                            </tbody>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                <tr>
-                                    <td colspan="2" scope="colgroup">
-                                        <button
-                                            id="expand-quality-title-{{ accordion_index }}"
-                                            type="button"
-                                            class="flex items-center justify-between w-full text-center font-semibold py-2"
-                                            @click="openModal(all_qualities)"
-                                            :aria-expanded="all_qualities.show"
-                                            aria-controls="expand-quality-{{ accordion_index }}"
-                                        >
-                                        <span><span x-text="all_qualities.show ? 'Hide' : 'Show'"></span> all interactomes</span>
-                                            <svg class="fill-indigo-500 shrink-0 ml-8" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                                                <rect y="7" width="16" height="2" rx="1" class="transform origin-center transition duration-200 ease-out" :class="{'!rotate-180': all_qualities}" />
-                                                <rect y="7" width="16" height="2" rx="1" class="transform origin-center rotate-90 transition duration-200 ease-out" :class="{'!rotate-180': all_qualities}" />
-                                            </svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tbody id="expand-quality-{{ accordion_index }}"
-                                role="region"
-                                aria-labelledby="expand-quality-title-{{ accordion_index }}"
-                                class="text-sm text-slate-600 overflow-hidden transition-all duration-300 ease-in-out"
-                                :class="all_qualities.show ? 'h-auto opacity-100' : 'hidden opacity-0'"
-                                >
-                                    {% for quality, group in [("all", ""), ("high throughput", ""), ("literature curated", ""),
-                                                              ("all", "all qualities"), ("high throughput", "all qualities"), ("literature curated", "all qualities"),] %}
-                                        {% if group in date_dir and quality in date_dir[group] %}
+                                </tbody>
+                            {% else %}
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    {% if display_version %}
+                                    <tr class="border-t border-gray-200">
+                                        <th colspan="2" scope="colgroup" class="bg-gray-50 py-2 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3">{{ year }}-{{ month }}</th>
+                                    </tr>
+                                    {% endif %}
+                                    {% for quality, group in [("all", "high quality"), ("high throughput", "high quality"), ("literature curated", "high quality")] %}
+                                        {% if (group in date_dir) and (quality in date_dir[group]) %}
                                             {{ table_row(date_dir[group][quality], group, quality) }}
                                         {% endif %}
                                     {% endfor %}
-                            </tbody>
+                                </tbody>
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    <tr>
+                                        <td colspan="2" scope="colgroup">
+                                            <button
+                                                id="expand-quality-title-{{ accordion_index }}"
+                                                type="button"
+                                                class="flex items-center justify-between w-full text-center font-semibold py-2"
+                                                @click="openModal(all_qualities)"
+                                                :aria-expanded="all_qualities.show"
+                                                aria-controls="expand-quality-{{ accordion_index }}"
+                                            >
+                                            <span><span x-text="all_qualities.show ? 'Hide' : 'Show'"></span> all interactomes</span>
+                                                <svg class="fill-indigo-500 shrink-0 ml-8" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect y="7" width="16" height="2" rx="1" class="transform origin-center transition duration-200 ease-out" :class="{'!rotate-180': all_qualities}" />
+                                                    <rect y="7" width="16" height="2" rx="1" class="transform origin-center rotate-90 transition duration-200 ease-out" :class="{'!rotate-180': all_qualities}" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody id="expand-quality-{{ accordion_index }}"
+                                    role="region"
+                                    aria-labelledby="expand-quality-title-{{ accordion_index }}"
+                                    class="text-sm text-slate-600 overflow-hidden transition-all duration-300 ease-in-out"
+                                    :class="all_qualities.show ? 'h-auto opacity-100' : 'hidden opacity-0'"
+                                    >
+                                        {% for quality, group in [("all", ""), ("high throughput", ""), ("literature curated", ""),
+                                                                  ("all", "all qualities"), ("high throughput", "all qualities"), ("literature curated", "all qualities"),] %}
+                                            {% if group in date_dir and quality in date_dir[group] %}
+                                                {{ table_row(date_dir[group][quality], group, quality) }}
+                                            {% endif %}
+                                        {% endfor %}
+                                </tbody>
+                            {% endif %}
                         {% endfor %}
                     </table>
                 </div>
