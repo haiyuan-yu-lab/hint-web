@@ -37,6 +37,7 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("HINT_CSRF_TRUSTED_ORIGINS",
                                       default="http://localhost"
                                       " http://127.0.0.0"
                                       " http://0.0.0.0"
+                                      " https://hint.yulab.org"
                                       ).split(" ")
 
 # Application definition
