@@ -231,7 +231,8 @@ def get_database_organisms(organisms: Dict,
                 if not header_read:
                     header_read = True
                     continue
-                _, _, _, _, _, taxid, _, _, _ = line.strip().split("\t")
+                #_, _, _, _, _, taxid, _, _, _ = line.strip().split("\t")
+                taxid = line.strip().split("\t")[5]
                 taxid = int(taxid)
                 if taxid in valid_organisms:
                     continue
