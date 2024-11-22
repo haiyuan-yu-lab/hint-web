@@ -158,7 +158,7 @@ def insert_interactions(hint_output_dir: Path,
                     header_read = True
                     continue
                 (up_a, up_b, g_a, g_b,
-                 p_m_qs_t, _, bin_hq, cc_hq, _, _) = line.strip().split("\t")
+                 p_m_qs_t, _, bin_hq, cc_hq, _, _) = line.strip("\n").split("\t")
                 try:
                     bin_hq = bin_hq == "True"
                     cc_hq = cc_hq == "True"
