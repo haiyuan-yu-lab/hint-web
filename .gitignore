@@ -1,3 +1,10 @@
+
+# HINT web static files
+hint-data/
+hint/base/static/raw_hint_files/*
+!hint/base/static/raw_hint_files/how-to-manage-this-folder.md
+log.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
