@@ -71,7 +71,7 @@ class Protein(models.Model):
     # we support UniProt and Gene Symbols, max_lengths are 25, which may be
     # too long for the present, but maybe not enough in the future!
     uniprot_accession = models.CharField(max_length=25, unique=True)
-    gene_accession = models.CharField(max_length=25)
+    gene_accession = models.CharField(max_length=80)
     entry_name = models.CharField(max_length=250, default="")
     description = models.TextField()
     organism = models.ForeignKey(Organism,
